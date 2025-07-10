@@ -18,6 +18,8 @@ app.add_middleware(
         "http://localhost:3001", 
         "http://localhost:3002",
         "http://localhost:3003",
+        "https://web-production-80694.up.railway.app", 
+        "https://expert-finder.up.railway.app"
         "*"  # Allow all origins during development
     ],
     allow_credentials=True,
