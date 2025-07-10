@@ -1,0 +1,1662 @@
+=== BACKEND STRUCTURE ===
+
+--- Main Entry Point ---
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import experts, search
+from app.utils.database import init_db
+
+app = FastAPI(title="Expert Finder API", version="1.0.0")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    init_db()
+
+# Include routers
+app.include_router(experts.router, prefix="/api/experts", tags=["experts"])
+app.include_router(search.router, prefix="/api/search", tags=["search"])
+
+@app.get("/")
+async def root():
+    return {"message": "Expert Finder API is running"}
+
+=== API ENDPOINTS ===
+
+--- API Init ---
+
+--- Experts API ---
+from fastapi import APIRouter, HTTPException
+from typing import List
+from app.models.expert import Expert
+from app.services.expert_service import ExpertService
+
+router = APIRouter()
+
+# Create service instance
+expert_service = ExpertService()
+
+@router.post("/", response_model=Expert)
+async def create_expert(expert: Expert):
+    """Create a new expert"""
+    try:
+        return expert_service.add_expert(expert, source=expert.source)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{expert_id}", response_model=Expert)
+async def get_expert(expert_id: str):
+    """Get an expert by ID"""
+    # This would need to be implemented with a proper lookup
+    raise HTTPException(status_code=404, detail="Expert not found")
+
+--- Search API ---
+from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi.responses import JSONResponse
+from app.models.expert import SearchQuery, SearchResult
+from app.services.search_service import search_service
+from app.utils.cache import cache_result, get_cached_result
+from app.utils.rate_limit import rate_limit
+from datetime import datetime
+import hashlib
+import json
+
+router = APIRouter()
+
+@router.post("/", response_model=SearchResult)
+@rate_limit(calls=60, period=60)  # 60 calls per minute
+async def search_experts(query: SearchQuery, request: Request):
+    """Search for experts with caching and rate limiting"""
+    
+    # Generate cache key
+    cache_key = hashlib.md5(
+        f"{query.query}:{query.source}:{query.limit}".encode()
+    ).hexdigest()
+    
+    # Check cache first
+    cached = await get_cached_result(cache_key)
+    if cached:
+        return JSONResponse(content=cached)
+    
+    try:
+        # Perform search
+        experts = await search_service.search_experts_multi_source(
+            query=query.query,
+            limit=query.limit
+        )
+        
+        # Filter by source if specified
+        if query.source != "all":
+            experts = [e for e in experts if e.source == query.source]
+        
+        result = SearchResult(
+            experts=experts,
+            query=query.query,
+            timestamp=datetime.now(),
+            total_results=len(experts)
+        )
+        
+        # Cache result
+        await cache_result(cache_key, result.dict(), ttl=3600)  # 1 hour cache
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/realtime/{expert_name}")
+async def get_realtime_expert_info(expert_name: str):
+    """Get real-time information about a specific expert"""
+    try:
+        # Search for latest information
+        experts = await search_service.search_experts_multi_source(
+            query=expert_name,
+            limit=1
+        )
+        
+        if not experts:
+            raise HTTPException(status_code=404, detail="Expert not found")
+        
+        return experts[0]
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+=== DATA MODELS ===
+
+--- Models Init ---
+
+--- Expert Model ---
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
+
+class Expert(BaseModel):
+    id: str
+    name: str
+    title: Optional[str] = None
+    organization: Optional[str] = None
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    skills: List[str] = []
+    experience_years: Optional[int] = None
+    education_level: Optional[str] = None
+    citations: Optional[int] = None
+    linkedin_url: Optional[str] = None
+    scholar_url: Optional[str] = None
+    credibility_score: Optional[float] = None
+    source: str  # "linkedin" or "scholar"
+    
+class SearchQuery(BaseModel):
+    query: str
+    source: Optional[str] = "all"  # "all", "linkedin", "scholar"
+    limit: Optional[int] = 10
+    
+class SearchResult(BaseModel):
+    experts: List[Expert]
+    query: str
+    timestamp: datetime
+    total_results: int
+
+--- Database Model ---
+from sqlalchemy import create_engine, Column, String, Integer, Float, DateTime, JSON, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime
+import os
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/expertfinder")
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class ExpertDB(Base):
+    __tablename__ = "experts"
+    
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False, index=True)
+    title = Column(String)
+    organization = Column(String)
+    location = Column(String)
+    bio = Column(Text)
+    skills = Column(JSON)
+    experience_years = Column(Integer)
+    education_level = Column(String)
+    citations = Column(Integer)
+    linkedin_url = Column(String)
+    scholar_url = Column(String)
+    twitter_url = Column(String)
+    website_url = Column(String)
+    credibility_score = Column(Float)
+    source = Column(String)
+    last_updated = Column(DateTime, default=datetime.utcnow)
+    expert_metadata = Column(JSON, name='metadata')  # Changed: renamed to expert_metadata
+
+class SearchHistory(Base):
+    __tablename__ = "search_history"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    query = Column(String, nullable=False)
+    source = Column(String)
+    results_count = Column(Integer)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    user_ip = Column(String)
+    search_metadata = Column(JSON, name='metadata')  # Changed: renamed to search_metadata
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+=== SERVICES ===
+
+--- Services Init ---
+
+--- Expert Service ---
+from typing import List, Optional
+from app.models.expert import Expert
+from app.utils.database import get_collection, init_db
+from app.utils.embeddings import embedding_generator
+import uuid
+
+class ExpertService:
+    def __init__(self):
+        # Ensure database is initialized
+        init_db()
+        self.linkedin_collection = get_collection("linkedin_experts")
+        self.scholar_collection = get_collection("scholar_experts")
+    
+    def create_expert_text(self, expert: Expert) -> str:
+        """Create searchable text from expert data"""
+        parts = [
+            expert.name,
+            expert.title or "",
+            expert.organization or "",
+            expert.bio or "",
+            " ".join(expert.skills),
+            expert.location or ""
+        ]
+        return " ".join(filter(None, parts))
+    
+    def add_expert(self, expert: Expert, source: str = "linkedin"):
+        """Add an expert to the database"""
+        collection = self.linkedin_collection if source == "linkedin" else self.scholar_collection
+        
+        # Generate embedding
+        text = self.create_expert_text(expert)
+        embedding = embedding_generator.generate_embedding(text)
+        
+        # Add to collection
+        collection.add(
+            embeddings=[embedding],
+            documents=[text],
+            metadatas=[expert.dict()],
+            ids=[expert.id]
+        )
+        
+        return expert
+    
+    def search_experts(self, query: str, source: str = "all", limit: int = 10) -> List[Expert]:
+        """Search for experts based on query"""
+        results = []
+        
+        # Generate query embedding
+        query_embedding = embedding_generator.generate_embedding(query)
+        
+        # Search in LinkedIn collection
+        if source in ["all", "linkedin"]:
+            try:
+                linkedin_results = self.linkedin_collection.query(
+                    query_embeddings=[query_embedding],
+                    n_results=limit
+                )
+                if linkedin_results['metadatas'] and linkedin_results['metadatas'][0]:
+                    for metadata in linkedin_results['metadatas'][0]:
+                        expert = Expert(**metadata)
+                        expert.source = "linkedin"
+                        results.append(expert)
+            except Exception as e:
+                print(f"Error searching LinkedIn collection: {e}")
+        
+        # Search in Scholar collection
+        if source in ["all", "scholar"]:
+            try:
+                scholar_results = self.scholar_collection.query(
+                    query_embeddings=[query_embedding],
+                    n_results=limit
+                )
+                if scholar_results['metadatas'] and scholar_results['metadatas'][0]:
+                    for metadata in scholar_results['metadatas'][0]:
+                        expert = Expert(**metadata)
+                        expert.source = "scholar"
+                        results.append(expert)
+            except Exception as e:
+                print(f"Error searching Scholar collection: {e}")
+        
+        # Calculate credibility scores
+        results = self.calculate_credibility_scores(results)
+        
+        # Sort by credibility score
+        results.sort(key=lambda x: x.credibility_score or 0, reverse=True)
+        
+        return results[:limit]
+    
+    def calculate_credibility_scores(self, experts: List[Expert]) -> List[Expert]:
+        """Calculate credibility scores for experts"""
+        if not experts:
+            return experts
+        
+        # Simple scoring based on available data
+        for expert in experts:
+            score = 0
+            
+            # Experience years (max 20 points)
+            if expert.experience_years:
+                score += min(expert.experience_years, 20)
+            
+            # Education level (max 20 points)
+            education_scores = {
+                "PhD": 20,
+                "Masters": 15,
+                "Bachelors": 10,
+                "Other": 5
+            }
+            score += education_scores.get(expert.education_level or "Other", 5)
+            
+            # Citations (max 30 points)
+            if expert.citations:
+                score += min(expert.citations / 100, 30)
+            
+            # Skills count (max 20 points)
+            score += min(len(expert.skills) * 2, 20)
+            
+            # Has bio (10 points)
+            if expert.bio:
+                score += 10
+            
+            expert.credibility_score = min(score, 100)
+        
+        return experts
+
+# Don't initialize the service at module level
+# expert_service = ExpertService()
+
+--- Search Service ---
+import os
+import asyncio
+import aiohttp
+from typing import List, Dict, Optional
+from tenacity import retry, stop_after_attempt, wait_exponential
+from anthropic import Anthropic
+import requests
+from bs4 import BeautifulSoup
+from app.models.expert import Expert
+from app.models.database import ExpertDB, SessionLocal
+import uuid
+from datetime import datetime
+import json
+from urllib.parse import quote_plus
+import re
+
+class SearchService:
+    def __init__(self):
+        self.openai_key = os.getenv("OPENAI_API_KEY")
+        self.anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        self.serp_api_key = os.getenv("SERP_API_KEY")
+        self.google_api_key = os.getenv("GOOGLE_API_KEY")
+        self.google_cse_id = os.getenv("GOOGLE_CSE_ID")
+        self.bing_api_key = os.getenv("BING_API_KEY")
+        
+        # Only initialize Anthropic if key exists
+        self.anthropic = Anthropic(api_key=self.anthropic_key) if self.anthropic_key else None
+        
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    async def search_experts_multi_source(self, query: str, limit: int = 10) -> List[Expert]:
+        """Search for experts using multiple sources"""
+        
+        # Run searches in parallel
+        tasks = []
+        
+        # Add available search methods
+        if self.google_api_key and self.google_cse_id:
+            tasks.append(self.search_google_custom(query, limit))
+        
+        if self.bing_api_key:
+            tasks.append(self.search_bing(query, limit))
+            
+        if self.openai_key or self.anthropic:
+            tasks.append(self.search_with_ai(query, limit))
+            
+        if self.serp_api_key:
+            tasks.append(self.search_academic_sources(query, limit))
+            
+        # Always include these free searches
+        tasks.append(self.search_professional_networks(query, limit))
+        tasks.append(self.search_wikipedia_experts(query, limit))
+        tasks.append(self.search_github_influencers(query, limit))
+        
+        # If no API keys are configured, use web scraping
+        if not tasks:
+            tasks.append(self.search_web_scraping(query, limit))
+        
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Combine and deduplicate results
+        all_experts = []
+        seen_names = set()
+        
+        for result in results:
+            if isinstance(result, list):
+                for expert in result:
+                    if expert.name not in seen_names:
+                        all_experts.append(expert)
+                        seen_names.add(expert.name)
+            elif isinstance(result, Exception):
+                print(f"Search error: {result}")
+        
+        # If still no results, add mock data for demonstration
+        if not all_experts:
+            print("No results from any source, returning mock data")
+            all_experts = self.get_mock_experts(query)
+        
+        # Rank and score experts
+        scored_experts = self.calculate_comprehensive_scores(all_experts)
+        
+        # Store in database
+        self.store_experts_in_db(scored_experts)
+        
+        return scored_experts[:limit]
+    
+    async def search_google_custom(self, query: str, limit: int) -> List[Expert]:
+        """Use Google Custom Search API to find experts"""
+        if not self.google_api_key or not self.google_cse_id:
+            return []
+        
+        experts = []
+        search_query = f"{query} expert OR specialist OR researcher OR professor OR leader"
+        
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'key': self.google_api_key,
+            'cx': self.google_cse_id,
+            'q': search_query,
+            'num': min(limit, 10)
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        for item in data.get('items', []):
+                            expert = await self.extract_expert_from_search_result(item)
+                            if expert:
+                                experts.append(expert)
+                    else:
+                        print(f"Google search error: {response.status}")
+        except Exception as e:
+            print(f"Google search error: {e}")
+        
+        return experts
+    
+    async def search_bing(self, query: str, limit: int) -> List[Expert]:
+        """Use Bing Search API"""
+        if not self.bing_api_key:
+            return []
+        
+        experts = []
+        search_query = f"{query} expert specialist researcher"
+        
+        url = "https://api.bing.microsoft.com/v7.0/search"
+        headers = {
+            'Ocp-Apim-Subscription-Key': self.bing_api_key
+        }
+        params = {
+            'q': search_query,
+            'count': min(limit, 50)
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        for item in data.get('webPages', {}).get('value', []):
+                            expert = await self.extract_expert_from_bing_result(item)
+                            if expert:
+                                experts.append(expert)
+        except Exception as e:
+            print(f"Bing search error: {e}")
+        
+        return experts
+    
+    async def search_with_ai(self, query: str, limit: int) -> List[Expert]:
+        """Use AI to generate expert recommendations"""
+        experts = []
+        
+        prompt = f"""
+        Find {limit} real experts in the field of: {query}
+        
+        For each expert, provide:
+        - Full name
+        - Current title and organization
+        - Brief bio (2-3 sentences)
+        - Key skills/expertise areas
+        - Notable achievements or contributions
+        - Approximate years of experience
+        - Education level
+        
+        Format as JSON array with these fields: name, title, organization, bio, skills, achievements, experience_years, education_level
+        Return only valid JSON, no other text.
+        """
+        
+        try:
+            # Try OpenAI first using requests
+            if self.openai_key:
+                headers = {
+                    'Authorization': f'Bearer {self.openai_key}',
+                    'Content-Type': 'application/json'
+                }
+                
+                data = {
+                    'model': 'gpt-3.5-turbo',
+                    'messages': [
+                        {"role": "system", "content": "You are an expert finder that provides accurate information about real professionals. Always return valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    'temperature': 0.7
+                }
+                
+                response = requests.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    headers=headers,
+                    json=data
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    content = result['choices'][0]['message']['content']
+                    try:
+                        expert_data = json.loads(content)
+                        experts = self.parse_ai_response(expert_data)
+                    except json.JSONDecodeError:
+                        print("Failed to parse AI response as JSON")
+                else:
+                    print(f"OpenAI API error: {response.status_code} - {response.text}")
+                
+            # Fallback to Anthropic if needed
+            elif self.anthropic:
+                response = self.anthropic.messages.create(
+                    model="claude-3-sonnet-20240229",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=2000
+                )
+                
+                expert_data = json.loads(response.content[0].text)
+                experts = self.parse_ai_response(expert_data)
+                
+        except Exception as e:
+            print(f"AI search error: {e}")
+        
+        return experts
+    
+    async def search_wikipedia_experts(self, query: str, limit: int) -> List[Expert]:
+        """Search Wikipedia for notable experts"""
+        experts = []
+        
+        try:
+            # Search Wikipedia API
+            search_url = "https://en.wikipedia.org/w/api.php"
+            search_params = {
+                'action': 'query',
+                'format': 'json',
+                'list': 'search',
+                'srsearch': f'{query} expert OR scientist OR researcher OR professor',
+                'srlimit': limit
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(search_url, params=search_params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        for item in data.get('query', {}).get('search', []):
+                            # Get page content
+                            page_params = {
+                                'action': 'query',
+                                'format': 'json',
+                                'prop': 'extracts',
+                                'exintro': True,
+                                'explaintext': True,
+                                'titles': item['title']
+                            }
+                            
+                            async with session.get(search_url, params=page_params) as page_response:
+                                if page_response.status == 200:
+                                    page_data = await page_response.json()
+                                    pages = page_data.get('query', {}).get('pages', {})
+                                    
+                                    for page_id, page in pages.items():
+                                        if 'extract' in page:
+                                            expert = self.extract_expert_from_wikipedia(
+                                                page['title'],
+                                                page['extract']
+                                            )
+                                            if expert:
+                                                experts.append(expert)
+        except Exception as e:
+            print(f"Wikipedia search error: {e}")
+        
+        return experts
+    
+    async def search_academic_sources(self, query: str, limit: int) -> List[Expert]:
+        """Search academic databases and Google Scholar"""
+        experts = []
+        
+        # Search Google Scholar using SerpAPI
+        if self.serp_api_key:
+            url = "https://serpapi.com/search"
+            params = {
+                'engine': 'google_scholar_profiles',
+                'mauthors': query,
+                'api_key': self.serp_api_key,
+                'num': limit
+            }
+            
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, params=params) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            
+                            for profile in data.get('profiles', []):
+                                expert = Expert(
+                                    id=str(uuid.uuid4()),
+                                    name=profile.get('name', ''),
+                                    title=profile.get('affiliations', ''),
+                                    bio=f"Research interests: {profile.get('interests', 'Not specified')}",
+                                    scholar_url=profile.get('link', ''),
+                                    citations=profile.get('cited_by', {}).get('value', 0),
+                                    source='scholar'
+                                )
+                                experts.append(expert)
+            except Exception as e:
+                print(f"Academic search error: {e}")
+        
+        return experts
+    
+    async def search_professional_networks(self, query: str, limit: int) -> List[Expert]:
+        """Search professional networks and directories"""
+        experts = []
+        
+        # LinkedIn public search (web scraping approach)
+        try:
+            search_url = f"https://www.google.com/search?q=site:linkedin.com/in/ {query} expert"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(search_url, headers=headers) as response:
+                    if response.status == 200:
+                        html = await response.text()
+                        soup = BeautifulSoup(html, 'html.parser')
+                        
+                        # Extract LinkedIn profiles from search results
+                        for result in soup.find_all('div', class_='g')[:limit]:
+                            link = result.find('a')
+                            if link and 'linkedin.com/in/' in link.get('href', ''):
+                                title = result.find('h3')
+                                snippet = result.find('span', class_='st')
+                                
+                                if title:
+                                    expert = Expert(
+                                        id=str(uuid.uuid4()),
+                                        name=title.text.split(' - ')[0],
+                                        title=snippet.text if snippet else '',
+                                        linkedin_url=link['href'],
+                                        source='linkedin',
+                                        bio=snippet.text if snippet else ''
+                                    )
+                                    experts.append(expert)
+        except Exception as e:
+            print(f"Professional network search error: {e}")
+        
+        return experts
+    
+    async def search_github_influencers(self, query: str, limit: int) -> List[Expert]:
+        """Search GitHub for influential developers"""
+        experts = []
+        
+        # Only search GitHub for tech-related queries
+        tech_keywords = ['software', 'programming', 'developer', 'engineer', 'code', 'tech', 'data', 'ai', 'machine learning']
+        if not any(keyword in query.lower() for keyword in tech_keywords):
+            return experts
+        
+        url = f"https://api.github.com/search/users"
+        params = {
+            'q': f"{query} in:bio",
+            'sort': 'followers',
+            'order': 'desc',
+            'per_page': limit
+        }
+        
+        headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'ExpertFinder/1.0'
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        for user in data.get('items', []):
+                            # Fetch detailed user info
+                            async with session.get(user['url'], headers=headers) as user_response:
+                                if user_response.status == 200:
+                                    user_data = await user_response.json()
+                                    
+                                    expert = Expert(
+                                        id=str(uuid.uuid4()),
+                                        name=user_data.get('name') or user_data.get('login'),
+                                        title=f"Software Developer",
+                                        organization=user_data.get('company'),
+                                        location=user_data.get('location'),
+                                        bio=user_data.get('bio') or f"GitHub developer with {user_data.get('followers', 0)} followers",
+                                        website_url=user_data.get('blog'),
+                                        twitter_url=f"https://twitter.com/{user_data.get('twitter_username')}" if user_data.get('twitter_username') else None,
+                                        source='github',
+                                        github_stars=user_data.get('public_repos', 0)
+                                    )
+                                    experts.append(expert)
+        except Exception as e:
+            print(f"GitHub search error: {e}")
+        
+        return experts
+    
+    async def search_web_scraping(self, query: str, limit: int) -> List[Expert]:
+        """Fallback web scraping method"""
+        experts = []
+        
+        try:
+            search_url = f"https://www.google.com/search?q={quote_plus(query + ' expert specialist')}&num={limit}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(search_url, headers=headers) as response:
+                    if response.status == 200:
+                        html = await response.text()
+                        soup = BeautifulSoup(html, 'html.parser')
+                        
+                        for result in soup.find_all('div', class_='g')[:limit]:
+                            title_elem = result.find('h3')
+                            snippet_elem = result.find('span', class_='st')
+                            
+                            if title_elem and snippet_elem:
+                                # Try to extract name from title
+                                title_text = title_elem.text
+                                name_match = re.search(r'^([A-Z][a-z]+ [A-Z][a-z]+)', title_text)
+                                
+                                if name_match:
+                                    expert = Expert(
+                                        id=str(uuid.uuid4()),
+                                        name=name_match.group(1),
+                                        title="Expert",
+                                        bio=snippet_elem.text,
+                                        source='web'
+                                    )
+                                    experts.append(expert)
+        except Exception as e:
+            print(f"Web scraping error: {e}")
+        
+        return experts
+    
+    async def extract_expert_from_search_result(self, result: Dict) -> Optional[Expert]:
+        """Extract expert information from search result"""
+        try:
+            title = result.get('title', '')
+            snippet = result.get('snippet', '')
+            link = result.get('link', '')
+            
+            # Check if this looks like an expert profile
+            expert_indicators = ['professor', 'dr.', 'phd', 'expert', 'researcher', 'scientist', 'director', 'founder', 'ceo']
+            if not any(indicator in title.lower() or indicator in snippet.lower() for indicator in expert_indicators):
+                return None
+            
+            # Try to extract name from title
+            name_match = re.search(r'^([A-Z][a-z]+ [A-Z][a-z]+)', title)
+            name = name_match.group(1) if name_match else title.split(' - ')[0]
+            
+            return Expert(
+                id=str(uuid.uuid4()),
+                name=name,
+                bio=snippet,
+                website_url=link,
+                source='web'
+            )
+        except Exception as e:
+            print(f"Extraction error: {e}")
+        
+        return None
+    
+    async def extract_expert_from_bing_result(self, result: Dict) -> Optional[Expert]:
+        """Extract expert information from Bing search result"""
+        try:
+            name = result.get('name', '')
+            snippet = result.get('snippet', '')
+            url = result.get('url', '')
+            
+            # Similar logic to Google extraction
+            expert_indicators = ['professor', 'dr.', 'phd', 'expert', 'researcher', 'scientist', 'director', 'founder', 'ceo']
+            if not any(indicator in name.lower() or indicator in snippet.lower() for indicator in expert_indicators):
+                return None
+            
+            # Extract name
+            name_match = re.search(r'^([A-Z][a-z]+ [A-Z][a-z]+)', name)
+            expert_name = name_match.group(1) if name_match else name.split(' - ')[0]
+            
+            return Expert(
+                id=str(uuid.uuid4()),
+                name=expert_name,
+                bio=snippet,
+                website_url=url,
+                source='bing'
+            )
+        except Exception as e:
+            print(f"Bing extraction error: {e}")
+        
+        return None
+    
+    def extract_expert_from_wikipedia(self, title: str, extract: str) -> Optional[Expert]:
+        """Extract expert information from Wikipedia page"""
+        try:
+            # Check if this is likely an expert/person
+            person_indicators = ['born', 'is a', 'was a', 'professor', 'researcher', 'scientist', 'expert']
+            if not any(indicator in extract.lower() for indicator in person_indicators):
+                return None
+            
+            # Extract key information
+            bio = extract[:500] + "..." if len(extract) > 500 else extract
+            
+            # Try to extract title/position
+            title_match = re.search(r'is an? ([^.]+)', extract)
+            expert_title = title_match.group(1) if title_match else "Notable Expert"
+            
+            return Expert(
+                id=str(uuid.uuid4()),
+                name=title,
+                title=expert_title,
+                bio=bio,
+                website_url=f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}",
+                source='wikipedia'
+            )
+        except Exception:
+            return None
+    
+    def parse_ai_response(self, data: any) -> List[Expert]:
+        """Parse AI response into Expert objects"""
+        experts = []
+        
+        # Handle both list and dict responses
+        if isinstance(data, dict):
+            data = data.get('experts', [data])
+        elif not isinstance(data, list):
+            return experts
+        
+        for item in data:
+            if isinstance(item, dict):
+                expert = Expert(
+                    id=str(uuid.uuid4()),
+                    name=item.get('name', 'Unknown'),
+                    title=item.get('title'),
+                    organization=item.get('organization'),
+                    bio=item.get('bio'),
+                    skills=item.get('skills', []),
+                    experience_years=item.get('experience_years'),
+                    education_level=item.get('education_level'),
+                    source='ai'
+                )
+                experts.append(expert)
+        
+        return experts
+    
+    def get_mock_experts(self, query: str) -> List[Expert]:
+        """Return mock experts for testing"""
+        return [
+            Expert(
+                id=str(uuid.uuid4()),
+                name="Dr. Jane Smith",
+                title="AI Research Director", 
+                organization="Tech University",
+                bio=f"Leading researcher in {query} with over 15 years of experience in developing cutting-edge solutions.",
+                skills=[query, "Research", "Innovation", "Leadership"],
+                experience_years=15,
+                education_level="PhD in Computer Science",
+                source="mock",
+                credibility_score=85,
+                location="San Francisco, CA",
+                linkedin_url="https://linkedin.com/in/janesmith",
+                email="jane.smith@techuniversity.edu"
+            ),
+            Expert(
+                id=str(uuid.uuid4()),
+                name="Prof. John Doe",
+                title="Distinguished Professor",
+                organization="Innovation Labs",
+                bio=f"Expert in {query} and related technologies. Published over 100 papers and holds 20 patents.",
+                skills=[query, "Teaching", "Patents", "Publications"],
+                experience_years=20,
+                education_level="PhD in Engineering",
+                source="mock",
+                credibility_score=80,
+                location="Seattle, WA",
+                scholar_url="https://scholar.google.com/citations?user=example",
+                citations=5000
+            ),
+            Expert(
+                id=str(uuid.uuid4()),
+                name="Sarah Johnson",
+                title="Industry Leader",
+                organization="Global Tech Corp",
+                bio=f"Specializes in practical applications of {query} for Fortune 500 companies.",
+                skills=[query, "Business Strategy", "Implementation", "Consulting"],
+                experience_years=12,
+                education_level="MBA",
+                source="mock",
+                credibility_score=75,
+                location="New York, NY",
+                website_url="https://sarahjohnson.com"
+            )
+        ]
+    
+    def calculate_comprehensive_scores(self, experts: List[Expert]) -> List[Expert]:
+        """Calculate comprehensive credibility scores"""
+        for expert in experts:
+            score = 0
+            
+            # Source reliability (max 20)
+            source_scores = {
+                'scholar': 20,
+                'linkedin': 18,
+                'github': 15,
+                'wikipedia': 15,
+                'bing': 12,
+                'web': 10,
+                'ai': 8,
+                'mock': 5
+            }
+            score += source_scores.get(expert.source, 5)
+            
+            # Experience (max 25)
+            if expert.experience_years:
+                score += min(expert.experience_years * 1.5, 25)
+            
+            # Education (max 20)
+            education_scores = {
+                'phd': 20,
+                'doctorate': 20,
+                'masters': 15,
+                'mba': 15,
+                'bachelors': 10,
+                'bs': 10,
+                'ba': 10
+            }
+            if expert.education_level:
+                for edu, points in education_scores.items():
+                    if edu in expert.education_level.lower():
+                        score += points
+                        break
+            
+            # Citations/Influence (max 20)
+            if expert.citations:
+                if expert.citations > 10000:
+                    score += 20
+                elif expert.citations > 5000:
+                    score += 18
+                elif expert.citations > 1000:
+                    score += 15
+                elif expert.citations > 500:
+                    score += 12
+                elif expert.citations > 100:
+                    score += 10
+                else:
+                    score += 5
+            
+            # Profile completeness (max 15)
+            completeness = 0
+            if expert.bio: completeness += 3
+            if expert.title: completeness += 3
+            if expert.organization: completeness += 3
+            if expert.skills: completeness += 3
+            if expert.location: completeness += 3
+            score += completeness
+            
+            expert.credibility_score = min(score, 100)
+        
+        # Sort by score
+        experts.sort(key=lambda x: x.credibility_score, reverse=True)
+        
+        return experts
+    
+    def store_experts_in_db(self, experts: List[Expert]):
+        """Store experts in PostgreSQL database"""
+        db = SessionLocal()
+        try:
+            for expert in experts:
+                # Check if expert already exists
+                existing = db.query(ExpertDB).filter(ExpertDB.name == expert.name).first()
+                
+                if existing:
+                    # Update existing record
+                    for key, value in expert.dict().items():
+                        if value is not None and key != 'id':
+                            setattr(existing, key, value)
+                    existing.last_updated = datetime.utcnow()
+                else:
+                    # Create new record
+                    db_expert = ExpertDB(**expert.dict())
+                    db.add(db_expert)
+            
+            db.commit()
+        except Exception as e:
+            print(f"Database error: {e}")
+            db.rollback()
+        finally:
+            db.close()
+
+# Global instance
+search_service = SearchService()
+=== UTILITIES ===
+Files in utils directory:
+__init__.py
+__pycache__
+cache.py
+database.py
+embeddings.py
+monitoring.py
+rate_limit.py
+
+--- Cache Utility ---
+import redis
+import json
+import os
+from typing import Optional, Dict, Any
+from datetime import datetime
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle datetime objects"""
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+redis_client = redis.from_url(
+    os.getenv("REDIS_URL", "redis://localhost:6379"),
+    decode_responses=True
+)
+
+async def cache_result(key: str, data: Dict[Any, Any], ttl: int = 3600):
+    """Cache search results"""
+    try:
+        redis_client.setex(
+            key,
+            ttl,
+            json.dumps(data, cls=DateTimeEncoder)
+        )
+    except Exception as e:
+        print(f"Cache error: {e}")
+
+async def get_cached_result(key: str) -> Optional[Dict]:
+    """Get cached result"""
+    try:
+        data = redis_client.get(key)
+        if data:
+            return json.loads(data)
+    except Exception as e:
+        print(f"Cache retrieval error: {e}")
+    return None
+--- Embeddings Utility ---
+from sentence_transformers import SentenceTransformer
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+MODEL_CACHE_DIR = "/app/models"
+
+class EmbeddingGenerator:
+    def __init__(self):
+        os.makedirs(MODEL_CACHE_DIR, exist_ok=True)
+        self.model = SentenceTransformer(
+            EMBEDDING_MODEL,
+            cache_folder=MODEL_CACHE_DIR
+        )
+    
+    def generate_embedding(self, text: str):
+        return self.model.encode(text).tolist()
+    
+    def generate_embeddings(self, texts: list):
+        return self.model.encode(texts).tolist()
+
+embedding_generator = EmbeddingGenerator()
+
+=== BACKEND DEPENDENCIES ===
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+chromadb==0.4.18
+langchain==0.0.340
+openai==1.35.0
+anthropic==0.8.1
+google-api-python-client==2.108.0
+beautifulsoup4==4.12.2
+requests==2.31.0
+pandas==2.1.3
+numpy==1.26.2
+python-dotenv==1.0.0
+pytest==7.4.3
+pytest-cov==4.1.0
+sentence-transformers==2.2.2
+huggingface-hub==0.17.3
+transformers==4.35.2
+torch==2.1.1
+aiohttp==3.9.1
+tenacity==8.2.3
+ratelimit==2.2.1
+cachetools==5.3.2
+redis==5.0.1
+celery==5.3.4
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+
+=== FRONTEND STRUCTURE ===
+
+--- Main App Component ---
+import React, { useState } from 'react';
+import { Container, Typography, Box } from '@mui/material';
+import SearchBar from './components/SearchBar';
+import ExpertResults from './components/ExpertResults';
+import { searchExperts } from './services/api';
+import './styles/App.css';
+
+function App() {
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
+
+  const handleSearch = async (query, source) => {
+    setLoading(true);
+    try {
+      const data = await searchExperts(query, source);
+      setResults(data);
+      setSearchHistory([...searchHistory, { query, timestamp: new Date() }]);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Container maxWidth="lg">
+      <Box sx={{ my: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom align="center">
+          Expert Finder
+        </Typography>
+        <Typography variant="h6" align="center" color="text.secondary" paragraph>
+          Your Tool for Finding Trustworthy Voices
+        </Typography>
+        
+        <SearchBar onSearch={handleSearch} />
+        
+        {loading && <Typography align="center">Searching...</Typography>}
+        
+        {results && !loading && (
+          <ExpertResults results={results} />
+        )}
+      </Box>
+    </Container>
+  );
+}
+
+export default App;
+
+=== REACT COMPONENTS ===
+
+--- SearchBar Component ---
+import React, { useState } from 'react';
+import { Box, TextField, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+
+function SearchBar({ onSearch }) {
+  const [query, setQuery] = useState('');
+  const [source, setSource] = useState('all');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim()) {
+      onSearch(query, source);
+    }
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 2, my: 3 }}>
+      <TextField
+        fullWidth
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search for experts (e.g., 'geospatial AI expert')"
+        variant="outlined"
+      />
+      
+      <FormControl sx={{ minWidth: 120 }}>
+        <InputLabel>Source</InputLabel>
+        <Select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          label="Source"
+        >
+          <MenuItem value="all">All</MenuItem>
+          <MenuItem value="linkedin">LinkedIn</MenuItem>
+          <MenuItem value="scholar">Scholar</MenuItem>
+        </Select>
+      </FormControl>
+      
+      <Button
+        type="submit"
+        variant="contained"
+        startIcon={<SearchIcon />}
+        sx={{ minWidth: 120 }}
+      >
+        Search
+      </Button>
+    </Box>
+  );
+}
+
+export default SearchBar;
+
+--- ExpertResults Component ---
+import React from 'react';
+import { Box, Typography } from '@mui/material';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import ExpertCard from './ExpertCard';
+import 'react-tabs/style/react-tabs.css';
+
+function ExpertResults({ results }) {
+  const linkedinExperts = results.experts.filter(e => e.source === 'linkedin');
+  const scholarExperts = results.experts.filter(e => e.source === 'scholar');
+
+  return (
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Found {results.total_results} experts
+      </Typography>
+      
+      <Tabs>
+        <TabList>
+          <Tab>All ({results.experts.length})</Tab>
+          <Tab>LinkedIn ({linkedinExperts.length})</Tab>
+          <Tab>Scholar ({scholarExperts.length})</Tab>
+        </TabList>
+
+        <TabPanel>
+          <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+            {results.experts.map((expert) => (
+              <ExpertCard key={expert.id} expert={expert} />
+            ))}
+          </Box>
+        </TabPanel>
+
+        <TabPanel>
+          <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+            {linkedinExperts.map((expert) => (
+              <ExpertCard key={expert.id} expert={expert} />
+            ))}
+          </Box>
+        </TabPanel>
+
+        <TabPanel>
+          <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+            {scholarExperts.map((expert) => (
+              <ExpertCard key={expert.id} expert={expert} />
+            ))}
+          </Box>
+        </TabPanel>
+      </Tabs>
+    </Box>
+  );
+}
+
+export default ExpertResults;
+
+--- ExpertCard Component ---
+import React from 'react';
+import { Card, CardContent, Typography, Box, Chip, LinearProgress, Button } from '@mui/material';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import SchoolIcon from '@mui/icons-material/School';
+
+function ExpertCard({ expert }) {
+  const credibilityColor = (score) => {
+    if (score >= 80) return 'success';
+    if (score >= 60) return 'warning';
+    return 'error';
+  };
+
+  return (
+    <Card sx={{ mb: 2 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+          <Box>
+            <Typography variant="h6" component="h3">
+              {expert.name}
+            </Typography>
+            <Typography color="text.secondary" gutterBottom>
+              {expert.title} {expert.organization && `at ${expert.organization}`}
+            </Typography>
+            
+            {expert.location && (
+              <Typography variant="body2" color="text.secondary">
+                📍 {expert.location}
+              </Typography>
+            )}
+            
+            {expert.bio && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {expert.bio}
+              </Typography>
+            )}
+            
+            <Box sx={{ mt: 1 }}>
+              {expert.skills.map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  size="small"
+                  sx={{ mr: 0.5, mb: 0.5 }}
+                />
+              ))}
+            </Box>
+          </Box>
+          
+          <Box sx={{ minWidth: 150, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Credibility Score
+            </Typography>
+            <Typography variant="h4" color={`${credibilityColor(expert.credibility_score)}.main`}>
+              {Math.round(expert.credibility_score || 0)}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={expert.credibility_score || 0}
+              color={credibilityColor(expert.credibility_score)}
+              sx={{ mt: 1 }}
+            />
+          </Box>
+        </Box>
+        
+        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          {expert.linkedin_url && (
+            <Button
+              size="small"
+              startIcon={<LinkedInIcon />}
+              href={expert.linkedin_url}
+              target="_blank"
+            >
+              LinkedIn
+            </Button>
+          )}
+          {expert.scholar_url && (
+            <Button
+              size="small"
+              startIcon={<SchoolIcon />}
+              href={expert.scholar_url}
+              target="_blank"
+            >
+              Scholar
+            </Button>
+          )}
+        </Box>
+        
+        <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
+          {expert.experience_years && (
+            <Typography variant="caption" color="text.secondary">
+              {expert.experience_years} years experience
+            </Typography>
+          )}
+          {expert.education_level && (
+            <Typography variant="caption" color="text.secondary">
+              {expert.education_level}
+            </Typography>
+          )}
+          {expert.citations && (
+            <Typography variant="caption" color="text.secondary">
+              {expert.citations} citations
+            </Typography>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default ExpertCard;
+
+=== FRONTEND API SERVICE ===
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const searchExperts = async (query, source = 'all', limit = 10) => {
+  try {
+    const response = await api.post('/api/search/', {
+      query,
+      source,
+      limit,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+export const getSearchHistory = async () => {
+  try {
+    const response = await api.get('/api/search/history');
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+=== STYLES ===
+
+--- App CSS ---
+.App {
+  text-align: center;
+}
+
+.search-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.expert-card {
+  background: white;
+  padding: 20px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.credibility-score {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.skill-chip {
+  background: #e0e0e0;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+--- Index CSS ---
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+=== FRONTEND DEPENDENCIES ===
+{
+  "name": "expert-finder-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.2",
+    "react-tabs": "^6.0.2",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.18",
+    "@mui/icons-material": "^5.14.18"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "react-scripts": "5.0.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
+
+=== DOCKER CONFIG ===
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - expert-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: expertfinder
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - expert-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d expertfinder"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/expertfinder
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHROMA_DB_PATH=/app/data/chromadb
+    volumes:
+      - ./data:/app/data
+      - ./backend/models:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - expert-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - expert-network
+
+networks:
+  expert-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  chroma_data:
+=== ENVIRONMENT FILES ===
+-rw-r--r--    1 James  staff    270  7  2 02:38 .env
+
+=== GIT STATUS ===
+Not a git repository
+
+=== DATABASE SCHEMA ===
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/sysdb/00001-collections.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/sysdb/00002-segments.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/sysdb/00004-tenants-databases.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/sysdb/00003-collection-dimension.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/metadb/00003-full-text-tokenize.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/metadb/00001-embedding-metadata.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/metadb/00002-embedding-metadata.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/migrations/embeddings_queue/00001-embeddings.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/test/db/migrations/00002-migration-2.psql.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/test/db/migrations/00001-migration-1.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/test/db/migrations/00003-migration-3.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/test/db/migrations/00001-migration-1.psql.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/test/db/migrations/00003-migration-3.psql.sql
+./backend/venv/lib/python3.11/site-packages/chromadb/test/db/migrations/00002-migration-2.sqlite.sql
+./backend/venv/lib/python3.11/site-packages/sqltrie/sqlite/init.sql
+./backend/venv/lib/python3.11/site-packages/sqltrie/sqlite/steps.sql
+./backend/venv/lib/python3.11/site-packages/sqltrie/sqlite/diff.sql
+
+=== ADDITIONAL FILES ===
+Files in backend/app/agents directory:
+__init__.py
+scholar_agent.py
+web_search_agent.py
+
+Files in backend/data_processing directory:
+__init__.py
+sample_data_generator.py
+
+=== PROJECT SUMMARY ===
+Total Python files:    18873
+Total JavaScript files:    49064
+Total CSS files:       26
+Total React components:        3
+
+=== ANALYSIS COMPLETE ===
+Timestamp: 2025年 7月 2日 星期三 03时49分20秒 CST

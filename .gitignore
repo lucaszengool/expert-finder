@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Models (large files)
+backend/models/sentence-transformers_all-MiniLM-L6-v2/*.bin
+backend/models/sentence-transformers_all-MiniLM-L6-v2/*.h5
+backend/models/sentence-transformers_all-MiniLM-L6-v2/pytorch_model.bin
+backend/models/sentence-transformers_all-MiniLM-L6-v2/tf_model.h5
+
+# Data
+backend/data/*.db
+backend/data/*.sqlite
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Frontend build
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Large data files
+*.csv
+*.xlsx
+*.xls
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!railway.json

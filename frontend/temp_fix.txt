@@ -1,0 +1,11 @@
+The handleSmartMatch function should map the data like this:
+
+setResults({
+  experts: data.matches.map(m => ({
+    ...m,  // Changed from ...m.expert
+    relevance_score: m.match_score,  // Changed from m.score
+    match_reasons: m.match_reasons   // Changed from m.reasons
+  })),
+  total_results: data.total,
+  query: searchQuery
+});

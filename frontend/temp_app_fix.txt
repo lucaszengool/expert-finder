@@ -1,0 +1,2 @@
+// Around line 305, replace the corrupted line with:
+{results.experts.filter(expert => expert && expert.id).map((expert, idx) => (
