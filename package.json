@@ -1,0 +1,15 @@
+{
+  "name": "expert-finder",
+  "version": "1.0.0",
+  "description": "Expert Finder Full Stack Application",
+  "scripts": {
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && pip install -r requirements.txt",
+    "start": "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
