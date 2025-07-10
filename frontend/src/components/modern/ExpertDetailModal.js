@@ -435,37 +435,6 @@ const ExpertDetailModal = ({ expert, onClose }) => {
 
               {activeTab === 'contact' && (
                 <div className="space-y-6">
-                  {/* Consultation Methods */}
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Consultation Methods</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {expert.consultation_types?.includes('video') && (
-                        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                          <Video className="w-5 h-5 text-green-400" />
-                          <span className="text-white font-medium">Video Call</span>
-                        </button>
-                      )}
-                      {expert.consultation_types?.includes('phone') && (
-                        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                          <Phone className="w-5 h-5 text-green-400" />
-                          <span className="text-white font-medium">Phone Call</span>
-                        </button>
-                      )}
-                      {expert.consultation_types?.includes('chat') && (
-                        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                          <MessageCircle className="w-5 h-5 text-green-400" />
-                          <span className="text-white font-medium">Chat</span>
-                        </button>
-                      )}
-                      {expert.consultation_types?.includes('in-person') && (
-                        <button className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                          <Users className="w-5 h-5 text-green-400" />
-                          <span className="text-white font-medium">In Person</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
                   {/* Contact Information */}
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-4">Contact Information</h3>
