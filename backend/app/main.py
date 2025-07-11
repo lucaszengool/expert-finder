@@ -8,7 +8,16 @@ import traceback
 import uuid
 import os
 
+from app.api.email_routes import router as email_router
+
+# Add to your FastAPI app
+
+
+# Also add CORS for frontend
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="Expert Finder API", version="2.0.0")
+app.include_router(email_router)
 
 # Configure CORS
 app.add_middleware(

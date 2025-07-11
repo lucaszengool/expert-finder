@@ -10,7 +10,7 @@ import {
   ChevronRight, ExternalLink, Sparkles
 } from 'lucide-react';
 
-const EnhancedExpertCard = ({ expert, onClick }) => {
+const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -37,6 +37,18 @@ const EnhancedExpertCard = ({ expert, onClick }) => {
 
   // Get primary contact method
   const primaryContact = expert.contacts?.find(c => c.preferred) || expert.contacts?.[0];
+
+  const handleEmailClick = (e) => {
+    e.stopPropagation();
+    if (onEmailClick) {
+      onEmailClick(expert);
+    } else {
+      // Fallback to mailto if no onEmailClick handler
+      const subject = encodeURIComponent(`Consultation Request - AI/ML Expertise`);
+      const body = encodeURIComponent(`Dear ${expert.name},\n\nI came across your profile and would like to discuss a potential consultation regarding AI/ML implementation.\n\nBest regards,`);
+      window.location.href = `mailto:${expert.email}?subject=${subject}&body=${body}`;
+    }
+  };
 
   return (
     <motion.div
@@ -243,14 +255,27 @@ const EnhancedExpertCard = ({ expert, onClick }) => {
           )}
         </div>
 
-        {/* Action Button */}
-        <button
-          onClick={() => onClick(expert)}
-          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-black font-medium py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
-        >
-          <span>View Full Profile</span>
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </button>
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          <button
+            onClick={() => onClick(expert)}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-black font-medium py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
+          >
+            <span>View Full Profile</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+          
+          {/* Direct Email Button */}
+          {expert.email && (
+            <button
+              onClick={handleEmailClick}
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Send Email</span>
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
   );

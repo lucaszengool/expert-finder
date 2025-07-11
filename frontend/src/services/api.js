@@ -10,6 +10,44 @@ const api = axios.create({
   },
 });
 
+export const modifyEmailWithAI = async (originalEmail, prompt, context) => {
+  try {
+    const response = await api.post('/api/ai/modify-email', {
+      originalEmail,
+      prompt,
+      context
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('AI email modification error:', error);
+    // Return the original email if modification fails
+    return {
+      modifiedEmail: originalEmail,
+      success: false
+    };
+  }
+};
+
+// Enhanced search with better accuracy
+export const searchExpertsWithEnhancedAccuracy = async (query, filters = {}) => {
+  try {
+    const response = await api.post('/api/search/', {
+      query,
+      source: 'all',
+      limit: 20,
+      offset: 0,
+      filters
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Search error:', error);
+    // Fallback to your existing mock data
+    return getMockEnhancedExperts(query);
+  }
+};
+
 
 export const searchMarketplace = async (query, category = 'all', limit = 20) => {
   try {

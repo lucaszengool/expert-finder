@@ -1,0 +1,125 @@
+=== BACKEND STRUCTURE ANALYSIS ===
+
+1. Python Environment:
+Python 3.10.4
+
+2. Directory Structure:
+.
+./app
+./app/agents
+./app/utils
+./app/models
+./app/api
+./app/services
+./tests
+./data_processing
+./models
+./models/sentence-transformers_all-MiniLM-L6-v2
+./models/sentence-transformers_all-MiniLM-L6-v2/1_Pooling
+./models/sentence-transformers_all-MiniLM-L6-v2/onnx
+./models/sentence-transformers_all-MiniLM-L6-v2/openvino
+./alembic
+./alembic/versions
+./venv
+./venv/bin
+./venv/include
+./venv/include/python3.11
+
+3. Main App Files:
+total 16
+drwxr-xr-x  10 James  staff   320  7  7 23:31 .
+drwxr-xr-x  52 James  staff  1664  7 12 00:13 ..
+-rw-r--r--   1 James  staff     0  7  5 00:37 __init__.py
+drwxr-xr-x   5 James  staff   160  7  7 23:31 agents
+drwxr-xr-x   9 James  staff   288  7  8 14:51 api
+-rw-r--r--   1 James  staff  2418  7 11 22:30 main.py
+-rw-r--r--   1 James  staff   732  7  5 00:37 main_old.py
+drwxr-xr-x  11 James  staff   352  7  7 23:31 models
+drwxr-xr-x   9 James  staff   288  7  7 23:31 services
+drwxr-xr-x  10 James  staff   320  7  7 23:31 utils
+
+4. API Routes (from main.py):
+32:@app.exception_handler(Exception)
+65:@app.on_event("startup")
+70:@app.get("/")
+75:@app.get("/health")
+
+5. Database Models:
+total 72
+drwxr-xr-x  11 James  staff   352  7  7 23:31 .
+drwxr-xr-x  10 James  staff   320  7  7 23:31 ..
+-rw-r--r--   1 James  staff   315  7  5 00:39 __init__.py
+-rw-r--r--   1 James  staff  1687  7  5 00:37 database.py.backup
+-rw-r--r--   1 James  staff  1103  7  7 23:06 db_models.py
+-rw-r--r--   1 James  staff  1618  7  7 23:16 expert.py
+-rw-r--r--   1 James  staff  1711  7  7 23:21 expert_dna.py
+-rw-r--r--   1 James  staff   946  7  7 23:22 marketplace.py
+-rw-r--r--   1 James  staff   345  7  5 03:22 schemas.py
+-rw-r--r--   1 James  staff   621  7  7 23:22 search.py
+-rw-r--r--   1 James  staff   607  7  7 23:22 user.py
+
+6. Services:
+total 80
+drwxr-xr-x   9 James  staff   288  7  7 23:31 .
+drwxr-xr-x  10 James  staff   320  7  7 23:31 ..
+-rw-r--r--   1 James  staff     0  7  5 00:37 __init__.py
+-rw-r--r--   1 James  staff  6306  7  5 00:37 enhanced_search_service.py
+-rw-r--r--   1 James  staff  7370  7  5 03:06 expert_service.py
+-rw-r--r--   1 James  staff  1302  7  5 00:54 marketplace_service.py
+-rw-r--r--   1 James  staff   748  7  5 03:16 matching_service.py
+-rw-r--r--   1 James  staff  9463  7  9 12:46 search_service.py
+-rw-r--r--   1 James  staff  1854  7  5 00:37 vector_search.py
+
+7. Email/AI Related Code:
+   - Email endpoints:
+app//utils/auth.py:            "email": "demo@example.com",
+app//utils/auth.py:        "email": "user@example.com", 
+
+   - AI/OpenAI endpoints:
+
+8. LinkedIn/Scraping Code:
+app//utils/database.py:    if collection_name == "linkedin_experts":
+app//utils/database.py:        return vector_search_service.linkedin_collection
+app//models/expert.py:    LINKEDIN = "linkedin"
+app//services/vector_search.py:        self.linkedin_collection = None
+app//services/vector_search.py:                self.linkedin_collection = self.client.get_collection("linkedin_experts")
+app//services/vector_search.py:                print("linkedin_experts collection already exists")
+app//services/vector_search.py:                self.linkedin_collection = self.client.create_collection("linkedin_experts")
+app//services/vector_search.py:                print("Created linkedin_experts collection")
+app//services/enhanced_search_service.py:            self.extract_linkedin_info(expert_name, expertise)
+app//services/enhanced_search_service.py:            "linkedin_data": results[4] if not isinstance(results[4], Exception) else {}
+
+9. Key Dependencies:
+beautifulsoup4==4.12.2
+fastapi==0.104.1
+langchain==0.0.340
+openai==1.35.0
+
+10. Environment Configuration:
+   .env file exists
+OPENAI_API_KEY=***
+
+11. Database Schema (from models):
+app/models//db_models.py:from sqlalchemy import Column, String, Text, JSON, DateTime, Integer, Float, Boolean
+app/models//db_models.py:    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+app/models//db_models.py:    name = Column(String, nullable=False)
+app/models//db_models.py:    title = Column(String)
+app/models//db_models.py:    email = Column(String)
+app/models//db_models.py:    location = Column(String)
+app/models//db_models.py:    organization = Column(String)
+app/models//db_models.py:    bio = Column(Text)
+app/models//db_models.py:    skills = Column(JSON)
+app/models//db_models.py:    experience = Column(JSON)
+app/models//db_models.py:    links = Column(JSON)
+app/models//db_models.py:    created_at = Column(DateTime, server_default=func.now())
+app/models//db_models.py:    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+app/models//db_models.py:    embedding = Column(JSON)  # Store embeddings for similarity search
+app/models//db_models.py:    expertise_level = Column(Integer)  # 1-5 scale
+
+12. Email Service Implementation:
+   No email_service.py found
+
+13. AI Service Implementation:
+   No ai_service.py found
+
+=== END OF ANALYSIS ===

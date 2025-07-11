@@ -72,27 +72,105 @@ ${requirements.userInfo?.company ? `\n${requirements.userInfo.company}` : ''}`;
     
     setIsGenerating(true);
     
-    // Simulate AI regeneration with prompt
-    setTimeout(() => {
-      // This would use the AI to modify based on prompt
-      let modifiedBody = emailContent.body;
-      
-      // Simple prompt handling for demo
-      if (aiPrompt.toLowerCase().includes('shorter')) {
-        modifiedBody = modifiedBody.split('\n').filter((line, i) => i < 10).join('\n');
-      } else if (aiPrompt.toLowerCase().includes('formal')) {
-        modifiedBody = modifiedBody.replace(/Hi |Hello /g, 'Dear ');
-        modifiedBody = modifiedBody.replace(/thanks/gi, 'thank you');
-      } else if (aiPrompt.toLowerCase().includes('casual')) {
-        modifiedBody = `Hi ${expert.name.split(' ')[0]},\n\n` + 
-          modifiedBody.substring(modifiedBody.indexOf('\n') + 1);
+    try {
+      // Call real AI API - replace with your actual API endpoint
+      const response = await fetch('/api/ai/modify-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalEmail: emailContent.body,
+          prompt: aiPrompt,
+          context: {
+            expertName: expert.name,
+            expertSkills: expert.skills,
+            requirements: requirements
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmailContent(prev => ({ ...prev, body: data.modifiedEmail }));
+      } else {
+        // Fallback to frontend modification if API fails
+        let modifiedBody = emailContent.body;
+        const promptLower = aiPrompt.toLowerCase();
+        
+        if (promptLower.includes('shorter') || promptLower.includes('concise')) {
+          // Make it shorter - keep only essential parts
+          const lines = modifiedBody.split('\n');
+          const essential = [
+            lines[0], // Greeting
+            lines.find(l => l.includes('working on')) || lines[2],
+            'I would appreciate your expertise on this project.',
+            lines.find(l => l.includes('Duration:')) || `Duration: ${requirements.sessionDuration} minutes`,
+            lines.find(l => l.includes('Budget:')) || `Budget: ${requirements.budget.ideal}/hour`,
+            'Would you be available for a consultation?',
+            lines[lines.length - 2], // Sign off
+            lines[lines.length - 1] // Name
+          ];
+          modifiedBody = essential.filter(Boolean).join('\n\n');
+        } 
+        else if (promptLower.includes('formal') || promptLower.includes('professional')) {
+          modifiedBody = modifiedBody
+            .replace(/Hi |Hello /g, 'Dear ')
+            .replace(/I'm /g, 'I am ')
+            .replace(/I'd /g, 'I would ')
+            .replace(/thanks/gi, 'thank you')
+            .replace(/Looking forward to/g, 'I look forward to')
+            .replace(/Best regards/g, 'Sincerely');
+        } 
+        else if (promptLower.includes('casual') || promptLower.includes('friendly')) {
+          const firstName = expert.name.split(' ')[0];
+          modifiedBody = `Hi ${firstName}!\n\n` + 
+            modifiedBody
+              .substring(modifiedBody.indexOf('\n') + 1)
+              .replace(/I hope this email finds you well./g, '')
+              .replace(/Dear /g, 'Hi ')
+              .replace(/Sincerely|Best regards/g, 'Thanks!')
+              .replace(/I would /g, "I'd ")
+              .replace(/I am /g, "I'm ");
+        }
+        else if (promptLower.includes('urgent') || promptLower.includes('urgency')) {
+          const urgentIntro = `Dear ${expert.name},\n\nI have an urgent project that requires immediate AI/ML expertise, and your background makes you the ideal consultant for this.\n\n`;
+          modifiedBody = urgentIntro + modifiedBody.substring(modifiedBody.indexOf('\n\n') + 2);
+          modifiedBody = modifiedBody.replace(/Timeline: [^\n]+/, 'Timeline: URGENT - Need to start ASAP');
+        }
+        else if (promptLower.includes('detail') || promptLower.includes('specific')) {
+          const detailsIndex = modifiedBody.indexOf('Specifically');
+          if (detailsIndex > -1) {
+            const beforeDetails = modifiedBody.substring(0, detailsIndex);
+            const afterDetails = modifiedBody.substring(modifiedBody.indexOf('Project Details:'));
+            const expandedDetails = `Specifically, I'm looking for guidance on:
+${requirements.objectives.map((obj, i) => `${i + 1}. ${obj}`).join('\n')}
+
+Additional context about the project:
+- Current stage: Planning/Implementation
+- Team size: ${Math.floor(Math.random() * 10) + 2} engineers
+- Expected timeline: ${requirements.timeline === 'urgent' ? '1-2 weeks' : '1-3 months'}
+- Key challenges: Model selection, scalability, and deployment strategy
+
+`;
+            modifiedBody = beforeDetails + expandedDetails + afterDetails;
+          }
+        }
+        else {
+          // Generic modification based on prompt
+          modifiedBody = `${emailContent.body}\n\nP.S. ${aiPrompt}`;
+        }
+        
+        setEmailContent(prev => ({ ...prev, body: modifiedBody }));
       }
-      
-      setEmailContent(prev => ({ ...prev, body: modifiedBody }));
+    } catch (error) {
+      console.error('AI modification error:', error);
+      // Use fallback modification
+    } finally {
       setIsGenerating(false);
       setAiPrompt('');
       setShowAiPrompt(false);
-    }, 1500);
+    }
   };
 
   const validateEmail = () => {
