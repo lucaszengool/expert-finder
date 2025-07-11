@@ -1,9 +1,8 @@
-# app/api/email_routes.py
-from fastapi import APIRouter, HTTPException, Depends
+# app/api/email.py
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 import logging
-from app.services.ai_service import ai_service
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +23,9 @@ async def modify_email(request: EmailModificationRequest):
     Modify an email using AI based on user prompt
     """
     try:
+        # Lazy import to avoid initialization issues
+        from app.services.ai_service import ai_service
+        
         modified_email = await ai_service.modify_email(
             original_email=request.originalEmail,
             prompt=request.prompt,
@@ -36,4 +38,8 @@ async def modify_email(request: EmailModificationRequest):
         )
     except Exception as e:
         logger.error(f"Error in modify_email endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return a fallback response instead of raising exception
+        return EmailModificationResponse(
+            modifiedEmail=request.originalEmail,  # Return original if modification fails
+            success=False
+        )
