@@ -7,6 +7,7 @@ import LearningHub from './components/modern/LearningHub';
 import ExpertDetailModal from './components/modern/ExpertDetailModal';
 import EmailComposer from './components/modern/EmailComposer';
 import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
+import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 
 function App() {
@@ -24,19 +25,28 @@ function App() {
   const [showEmailComposer, setShowEmailComposer] = useState(false);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  if (!searchQuery.trim()) return;
+  
+  setLoading(true);
+  try {
+    const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
     
-    setLoading(true);
-    try {
-      const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
-      setResults(data);
-      setSearchMode('standard');
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Apply strict filtering
+    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+    
+    setResults({
+      ...data,
+      experts: filteredExperts,
+      total_results: filteredExperts.length
+    });
+    
+    setSearchMode('standard');
+  } catch (error) {
+    console.error('Search failed:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSmartMatch = async () => {
     setLoading(true);
@@ -161,7 +171,7 @@ function App() {
             helpful: Math.floor(Math.random() * 30) + 5
           }
         ]
-      })) : [];
+      })).filter(expert => strictExpertValidator.isValidExpert(expert)) : [];
       
       console.log('Mapped experts:', experts);
       
@@ -487,7 +497,14 @@ function App() {
                           );
                         }
                         
-                        const validExperts = [];
+                        const validExperts = results.experts.filter(expert => {
+                          // Additional runtime validation
+                          const isValid = strictExpertValidator.isValidExpert(expert);
+                          if (!isValid) {
+                            console.log('Filtering out invalid expert:', expert.name, expert.profile_url);
+                          }
+                          return isValid;
+                        });
                         
                         for (let i = 0; i < results.experts.length; i++) {
                           const expert = results.experts[i];

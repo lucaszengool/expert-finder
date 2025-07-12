@@ -315,6 +315,142 @@ class SearchService:
         
         return mock_experts
     
+    async def search_verified_experts_only(
+        self, 
+        query: str,
+        source: str = "all",
+        limit: int = 10,
+        offset: int = 0,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Search for experts but ONLY return those from verified personal profiles
+        """
+        # Get initial results (double the limit to account for filtering)
+        raw_results = await self.search(query, source, limit * 3, offset, filters)
+        
+        verified_experts = []
+        
+        for expert in raw_results.get('experts', []):
+            # Validate the expert source
+            is_valid, reason, cleaned_expert = profile_validator.validate_expert_source(expert)
+            
+            if is_valid:
+                # Additional validation for real person
+                if self._is_real_person(cleaned_expert):
+                    verified_experts.append(cleaned_expert)
+                    
+                    # Stop when we have enough verified experts
+                    if len(verified_experts) >= limit:
+                        break
+        
+        # If we don't have enough results, search specifically on LinkedIn profiles
+        if len(verified_experts) < limit:
+            linkedin_results = await self._search_linkedin_profiles_directly(query, limit - len(verified_experts))
+            verified_experts.extend(linkedin_results)
+        
+        return {
+            "experts": verified_experts[:limit],
+            "total": len(verified_experts),
+            "query": query,
+            "filtered": True,
+            "sources_searched": ["LinkedIn Profiles", "Personal Websites", "Professional Networks"]
+        }
+    
+    def _is_real_person(self, expert: Dict) -> bool:
+        """
+        Additional checks to ensure it's a real person
+        """
+        name = expert.get('name', '').lower()
+        title = expert.get('title', '').lower()
+        
+        # Must have a proper name (at least first and last)
+        name_parts = name.split()
+        if len(name_parts) < 2:
+            return False
+        
+        # Check for suspicious patterns in title
+        suspicious_title_patterns = [
+            'course',
+            'training',
+            'workshop',
+            'seminar',
+            'webinar',
+            'tutorial',
+            'guide',
+            'how to',
+            'learn',
+            'master'
+        ]
+        
+        for pattern in suspicious_title_patterns:
+            if pattern in title:
+                return False
+        
+        # Must have professional title indicators
+        professional_indicators = [
+            'founder', 'ceo', 'cto', 'engineer', 'developer',
+            'scientist', 'researcher', 'professor', 'director',
+            'manager', 'consultant', 'advisor', 'expert',
+            'specialist', 'architect', 'designer', 'analyst'
+        ]
+        
+        has_professional_title = any(indicator in title for indicator in professional_indicators)
+        
+        return has_professional_title
+    
+    async def _search_linkedin_profiles_directly(self, query: str, limit: int) -> List[Dict]:
+        """
+        Search specifically for LinkedIn profiles
+        """
+        # Construct LinkedIn-specific search query
+        linkedin_query = f'site:linkedin.com/in/ "{query}" -pulse -posts -activity'
+        
+        try:
+            # Use Google Custom Search or your search method
+            results = await self._google_custom_search(linkedin_query, limit)
+            
+            verified_profiles = []
+            for result in results:
+                # Extract profile URL
+                url = result.get('link', '')
+                if profile_validator.is_valid_linkedin_profile(url):
+                    # Extract name from title (usually "Name - Title | LinkedIn")
+                    title = result.get('title', '')
+                    name = title.split(' - ')[0].strip()
+                    
+                    if name and len(name.split()) >= 2:
+                        expert = {
+                            'id': f'linkedin_{name.lower().replace(" ", "_")}',
+                            'name': name,
+                            'title': self._extract_title_from_snippet(result.get('snippet', '')),
+                            'profile_url': url,
+                            'linkedin_url': url,
+                            'source': 'LinkedIn',
+                            'source_type': 'linkedin_profile',
+                            'verified_profile': True,
+                            'bio': result.get('snippet', ''),
+                            'skills': self._extract_skills_from_text(result.get('snippet', ''))
+                        }
+                        verified_profiles.append(expert)
+            
+            return verified_profiles
+        except Exception as e:
+            logger.error(f"Error searching LinkedIn profiles: {e}")
+            return []
+    
+    def _extract_title_from_snippet(self, snippet: str) -> str:
+        """Extract professional title from LinkedIn snippet"""
+        # LinkedIn snippets often start with the title
+        lines = snippet.split('.')
+        if lines:
+            first_line = lines[0].strip()
+            # Remove common LinkedIn phrases
+            first_line = first_line.replace('View', '').replace('profile on LinkedIn', '').strip()
+            if len(first_line) < 100:  # Reasonable title length
+                return first_line
+        return "Professional"
+    
     async def vector_search(
         self,
         query: str,
