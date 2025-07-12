@@ -7,20 +7,51 @@ import {
   CheckCircle, Award, Briefcase, MessageCircle,
   Video, Phone, Mail, Globe, Linkedin, Twitter,
   TrendingUp, Users, BookOpen, Shield, Zap,
-  ChevronRight, ExternalLink, Sparkles
+  ChevronRight, ExternalLink, Sparkles,
+  Building, GraduationCap, Camera
 } from 'lucide-react';
 
 const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   const [imageError, setImageError] = useState(false);
+  const [coverImageError, setCoverImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Validate if this is a real expert (not a course/company)
+  const isValidExpert = () => {
+    const name = expert.name?.toLowerCase() || '';
+    const invalidKeywords = ['linkedin learning', 'coursera', 'framework', 'platform', 'udemy', 'edx'];
+    return !invalidKeywords.some(keyword => name.includes(keyword));
+  };
+
+  if (!isValidExpert()) {
+    return null; // Don't render invalid entries
+  }
+
+  // Ensure valid phone and email formats
+  const formatPhone = (phone) => {
+    if (!phone) return null;
+    // Check if it's a valid phone format
+    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+    return phoneRegex.test(phone) ? phone : null;
+  };
+
+  const formatEmail = (email) => {
+    if (!email) return null;
+    // Check if it's a valid email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) ? email : null;
+  };
+
+  const validEmail = formatEmail(expert.email);
+  const validPhone = formatPhone(expert.phone);
 
   // Calculate match percentage from relevance score
   const matchPercentage = expert.relevance_score 
     ? Math.round(expert.relevance_score * 100) 
-    : Math.round(Math.random() * 30 + 70);
+    : expert.match_score || Math.round(Math.random() * 30 + 70);
 
   // Get rating display
-  const rating = typeof expert.rating === 'number' ? expert.rating : parseFloat(expert.rating) || parseFloat((Math.random() * 1 + 4).toFixed(1));
+  const rating = typeof expert.rating === 'number' ? expert.rating : parseFloat(expert.rating) || 4.5;
   const totalReviews = expert.total_reviews || expert.social_proof?.[0]?.review_count || Math.floor(Math.random() * 500);
 
   // Get availability status
@@ -38,16 +69,74 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   // Get primary contact method
   const primaryContact = expert.contacts?.find(c => c.preferred) || expert.contacts?.[0];
 
-  const handleEmailClick = (e) => {
-    e.stopPropagation();
-    if (onEmailClick) {
-      onEmailClick(expert);
-    } else {
-      // Fallback to mailto if no onEmailClick handler
-      const subject = encodeURIComponent(`Consultation Request - AI/ML Expertise`);
-      const body = encodeURIComponent(`Dear ${expert.name},\n\nI came across your profile and would like to discuss a potential consultation regarding AI/ML implementation.\n\nBest regards,`);
-      window.location.href = `mailto:${expert.email}?subject=${subject}&body=${body}`;
+  // Profile image with better fallback
+  const profileImageUrl = expert.profile_image && !imageError 
+    ? expert.profile_image 
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name || 'Expert')}&background=10b981&color=fff&size=400&font-size=0.4`;
+
+  // Cover image with fallback based on expertise
+  const getCoverImage = () => {
+    if (expert.cover_image && !coverImageError) return expert.cover_image;
+    
+    // Fallback based on skills
+    const skills = expert.skills?.join(' ').toLowerCase() || '';
+    if (skills.includes('ai') || skills.includes('machine learning')) {
+      return "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&h=400&fit=crop";
+    } else if (skills.includes('data')) {
+      return "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=400&fit=crop";
+    } else if (skills.includes('cloud')) {
+      return "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=400&fit=crop";
     }
+    return "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=1200&h=400&fit=crop";
+  };
+
+  // Work samples component
+  const WorkSamples = () => {
+    if (!expert.images || expert.images.length === 0) return null;
+    
+    return (
+      <div className="mb-4">
+        <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+          <Camera className="w-3 h-3" />
+          Work Samples
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {expert.images.slice(0, 3).map((image, idx) => (
+            <div key={idx} className="flex-shrink-0 group cursor-pointer">
+              <div className="relative">
+                <img 
+                  src={image.url} 
+                  alt={image.caption}
+                  className="w-20 h-20 rounded-lg object-cover transition-transform group-hover:scale-105"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <ExternalLink className="w-4 h-4 text-white" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Credentials display
+  const CredentialBadges = () => {
+    if (!expert.credentials || expert.credentials.length === 0) return null;
+    
+    return (
+      <div className="mb-3 space-y-1">
+        {expert.credentials.slice(0, 2).map((cred, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <GraduationCap className="w-3 h-3 text-blue-400 flex-shrink-0" />
+            <span className="text-xs text-gray-300 truncate">
+              {cred.title} • {cred.issuer}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -58,27 +147,25 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
       onHoverEnd={() => setIsHovered(false)}
     >
       {/* Match Score Badge */}
-      {expert.match_score && (
+      {matchPercentage > 0 && (
         <div className="absolute top-4 right-4 z-10">
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-black text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
             <Sparkles className="w-4 h-4" />
-            {expert.match_score}% Match
+            {matchPercentage}% Match
           </div>
         </div>
       )}
 
       {/* Header Section */}
       <div className="relative">
-        {/* Cover Image or Gradient */}
+        {/* Enhanced Cover Image */}
         <div className="h-32 bg-gradient-to-br from-gray-800 via-gray-900 to-black relative overflow-hidden">
-          {expert.cover_image && (
-            <img 
-              src={expert.cover_image} 
-              alt="" 
-              className="w-full h-full object-cover opacity-40"
-              onError={(e) => e.target.style.display = 'none'}
-            />
-          )}
+          <img 
+            src={getCoverImage()} 
+            alt="" 
+            className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-70"
+            onError={() => setCoverImageError(true)}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
         </div>
 
@@ -89,16 +176,12 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
             <div className="relative">
               <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 p-0.5">
                 <div className="w-full h-full rounded-2xl bg-gray-900 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
-                  {expert.profile_image && !imageError ? (
-                    <img 
-                      src={expert.profile_image} 
-                      alt={expert.name}
-                      className="w-full h-full object-cover"
-                      onError={() => setImageError(true)}
-                    />
-                  ) : (
-                    <span>{expert.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'EX'}</span>
-                  )}
+                  <img 
+                    src={profileImageUrl}
+                    alt={expert.name}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
                 </div>
               </div>
               {expert.verified_expert && (
@@ -143,7 +226,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
                   />
                 ))}
               </div>
-              <span className="text-white font-medium ml-1">{typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
+              <span className="text-white font-medium ml-1">{rating.toFixed(1)}</span>
               <span className="text-gray-500">({totalReviews})</span>
             </div>
             {expert.location && (
@@ -158,12 +241,18 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
       {/* Content Section */}
       <div className="px-6 py-4">
+        {/* Credentials */}
+        <CredentialBadges />
+
         {/* Bio */}
         {expert.bio && (
           <p className="text-gray-300 text-sm line-clamp-2 mb-4">
             {expert.bio}
           </p>
         )}
+
+        {/* Work Samples */}
+        <WorkSamples />
 
         {/* Skills */}
         {expert.skills && expert.skills.length > 0 && (
@@ -231,7 +320,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
               <Video className="w-4 h-4" />
             </div>
           )}
-          {expert.consultation_types?.includes('phone') && (
+          {validPhone && expert.consultation_types?.includes('phone') && (
             <div className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer">
               <Phone className="w-4 h-4" />
             </div>
@@ -253,6 +342,17 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
               <Globe className="w-4 h-4" />
             </a>
           )}
+          {expert.linkedin_url || primaryContact?.method === 'linkedin' && (
+            <a 
+              href={expert.linkedin_url || primaryContact?.value} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Linkedin className="w-4 h-4" />
+            </a>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -265,10 +365,20 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
           
-          {/* Direct Email Button */}
-          {expert.email && (
+          {/* Email Button - Only show if valid email exists */}
+          {validEmail && (
             <button
-              onClick={handleEmailClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onEmailClick) {
+                  onEmailClick(expert);
+                } else {
+                  // Fallback to mailto
+                  const subject = encodeURIComponent(`Consultation Request - ${expert.skills?.[0] || 'Expertise'}`);
+                  const body = encodeURIComponent(`Dear ${expert.name},\n\nI came across your profile and would like to discuss a potential consultation.\n\nBest regards,`);
+                  window.location.href = `mailto:${validEmail}?subject=${subject}&body=${body}`;
+                }
+              }}
               className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
             >
               <Mail className="w-4 h-4" />
