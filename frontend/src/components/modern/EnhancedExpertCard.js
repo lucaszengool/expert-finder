@@ -10,17 +10,37 @@ import {
   ChevronRight, ExternalLink, Sparkles,
   Building, GraduationCap, Camera
 } from 'lucide-react';
+import WebsitePreview from './WebsitePreview';
 
 const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   const [imageError, setImageError] = useState(false);
   const [coverImageError, setCoverImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Validate if this is a real expert (not a course/company)
+  // Validate if this is a real expert (not a course/company/article)
   const isValidExpert = () => {
     const name = expert.name?.toLowerCase() || '';
-    const invalidKeywords = ['linkedin learning', 'coursera', 'framework', 'platform', 'udemy', 'edx'];
-    return !invalidKeywords.some(keyword => name.includes(keyword));
+    const title = expert.title?.toLowerCase() || '';
+    const invalidKeywords = [
+      'linkedin learning', 
+      'coursera', 
+      'framework', 
+      'platform', 
+      'udemy', 
+      'edx',
+      'online training',
+      'skill building',
+      'how to kick off' // Article title pattern
+    ];
+    
+    // Check if it's an article title
+    const isArticleTitle = title.includes('how to') || title.includes('kick off') || title.includes('establish');
+    if (isArticleTitle) {
+      // Fix the title if it's from an article
+      expert.title = expert.originalTitle || 'Healthcare AI Expert';
+    }
+    
+    return !invalidKeywords.some(keyword => name.includes(keyword) || title.includes(keyword));
   };
 
   if (!isValidExpert()) {
@@ -90,36 +110,60 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
     return "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=1200&h=400&fit=crop";
   };
 
-  // Work samples component
-  const WorkSamples = () => {
-    if (!expert.images || expert.images.length === 0) return null;
+  // Prepare website data for preview
+  const getWebsiteData = () => {
+    const websites = [];
     
-    return (
-      <div className="mb-4">
-        <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
-          <Camera className="w-3 h-3" />
-          Work Samples
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {expert.images.slice(0, 3).map((image, idx) => (
-            <div key={idx} className="flex-shrink-0 group cursor-pointer">
-              <div className="relative">
-                <img 
-                  src={image.url} 
-                  alt={image.caption}
-                  className="w-20 h-20 rounded-lg object-cover transition-transform group-hover:scale-105"
-                  onError={(e) => e.target.style.display = 'none'}
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                  <ExternalLink className="w-4 h-4 text-white" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+    // Add LinkedIn profile
+    if (expert.linkedin_url || expert.profile_url?.includes('linkedin.com/in/')) {
+      websites.push({
+        url: expert.linkedin_url || expert.profile_url,
+        type: 'LinkedIn Profile'
+      });
+    }
+    
+    // Add personal website
+    if (expert.website) {
+      websites.push({
+        url: expert.website,
+        type: 'Personal Website'
+      });
+    }
+    
+    // Add websites from contacts
+    if (expert.contacts) {
+      expert.contacts.forEach(contact => {
+        if (contact.method === 'website' && contact.value) {
+          websites.push({
+            url: contact.value,
+            type: 'Website'
+          });
+        }
+      });
+    }
+    
+    // Add any additional websites
+    if (expert.websites) {
+      expert.websites.forEach(site => {
+        if (typeof site === 'string') {
+          websites.push({ url: site, type: 'Website' });
+        } else {
+          websites.push(site);
+        }
+      });
+    }
+    
+    // Remove duplicates
+    const uniqueWebsites = websites.filter((site, index, self) =>
+      index === self.findIndex((s) => s.url === site.url)
     );
+    
+    return uniqueWebsites;
   };
+
+  const websiteData = getWebsiteData();
+
+  // Work samples component - removed since we're using WebsitePreview instead
 
   // Credentials display
   const CredentialBadges = () => {
@@ -251,8 +295,10 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
           </p>
         )}
 
-        {/* Work Samples */}
-        <WorkSamples />
+        {/* Website Preview Section */}
+        {websiteData.length > 0 && (
+          <WebsitePreview websites={websiteData} expertName={expert.name} />
+        )}
 
         {/* Skills */}
         {expert.skills && expert.skills.length > 0 && (
