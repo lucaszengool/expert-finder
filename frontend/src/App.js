@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User } from 'lucide-react';
+import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User, ChevronDown } from 'lucide-react';
 import { ClerkProvider, SignInButton, SignUpButton, UserButton, useUser, useClerk } from "@clerk/clerk-react";
 import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
 import Marketplace from './components/modern/Marketplace';
@@ -12,7 +12,7 @@ import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 
 // Get Clerk publishable key from environment
-const clerkPubKey = 'pk_test_aG9uZXN0LXB1bWEtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA';
+const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
 
 // Main App wrapped with Clerk
 function App() {
@@ -48,58 +48,76 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchMode, setSearchMode] = useState('standard'); // standard or smart
   
-  // Email composer states
-  const [selectedExpertForEmail, setSelectedExpertForEmail] = useState(null);
-  const [showEmailComposer, setShowEmailComposer] = useState(false);
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreResults, setHasMoreResults] = useState(false);
   const [allExperts, setAllExperts] = useState([]);
-
-  const handleSearch = async (page = 1) => {
-  if (!searchQuery.trim()) return;
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   
-  setLoading(true);
-  try {
-    const offset = (page - 1) * 10;
-    const data = await searchExpertsEnhanced(searchQuery, 'all', 10, offset);
+  // Email composer states
+  const [selectedExpertForEmail, setSelectedExpertForEmail] = useState(null);
+  const [showEmailComposer, setShowEmailComposer] = useState(false);
+
+  const handleSearch = async (page = 1, append = false) => {
+    if (!searchQuery.trim()) return;
     
-    // Apply strict filtering
-    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
-    
+    // Set appropriate loading state
     if (page === 1) {
-      // First page - replace results
-      setAllExperts(filteredExperts);
-      setResults({
-        ...data,
-        experts: filteredExperts,
-        total_results: data.total_results
-      });
+      setLoading(true);
     } else {
-      // Subsequent pages - append results
-      const newExperts = [...allExperts, ...filteredExperts];
-      setAllExperts(newExperts);
-      setResults({
-        ...data,
-        experts: newExperts,
-        total_results: data.total_results
-      });
+      setIsLoadingMore(true);
     }
     
-    setCurrentPage(page);
-    setHasMoreResults(data.has_more && filteredExperts.length > 0);
-    setSearchMode('standard');
-  } catch (error) {
-    console.error('Search failed:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const offset = (page - 1) * 10;
+      const data = await searchExpertsEnhanced(searchQuery, 'all', 10, offset);
+      
+      // Apply strict filtering
+      const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+      
+      if (page === 1 || !append) {
+        // First page or reset - replace results
+        setAllExperts(filteredExperts);
+        setResults({
+          ...data,
+          experts: filteredExperts,
+          total_results: data.total_results || filteredExperts.length
+        });
+      } else {
+        // Subsequent pages - append results
+        const newExperts = [...allExperts, ...filteredExperts];
+        setAllExperts(newExperts);
+        setResults({
+          ...data,
+          experts: newExperts,
+          total_results: data.total_results || newExperts.length
+        });
+      }
+      
+      setCurrentPage(page);
+      // Check if there are more results
+      setHasMoreResults(filteredExperts.length === 10 && data.total_results > (offset + filteredExperts.length));
+      setSearchMode('standard');
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
 
-const loadMoreExperts = () => {
-  handleSearch(currentPage + 1);
-};
+  const loadMoreExperts = () => {
+    handleSearch(currentPage + 1, true);
+  };
 
-  
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      setCurrentPage(1);
+      setHasMoreResults(false);
+      setAllExperts([]);
+      handleSearch(1, false);
+    }
+  };
 
   const handleSmartMatch = async () => {
     // Check if user is signed in for AI features
@@ -110,6 +128,9 @@ const loadMoreExperts = () => {
 
     setLoading(true);
     setSearchMode('smart');
+    setCurrentPage(1);
+    setHasMoreResults(false);
+    
     try {
       const preferences = {
         user_id: user.id, // Use actual Clerk user ID
@@ -234,6 +255,7 @@ const loadMoreExperts = () => {
       
       console.log('Mapped experts:', experts);
       
+      setAllExperts(experts);
       setResults({
         experts: experts,
         total_results: data.total || experts.length,
@@ -274,7 +296,7 @@ const loadMoreExperts = () => {
   // Load initial data
   useEffect(() => {
     if (searchQuery) {
-      handleSearch();
+      handleSearch(1, false);
     }
   }, []);
 
@@ -443,7 +465,7 @@ const loadMoreExperts = () => {
                       placeholder="Search by expertise, skills, or industry..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      onKeyPress={handleSearchKeyPress}
                       className="flex-1 bg-transparent px-4 py-4 text-white placeholder-gray-500 focus:outline-none"
                     />
                     <button 
@@ -529,99 +551,143 @@ const loadMoreExperts = () => {
 
               {/* Results */}
               {loading && currentPage === 1 ? (
-  <div className="text-center py-12">
-    <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
-    <p className="text-gray-400">Finding the best experts for you...</p>
-  </div>
-) : results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 ? (
-  <div>
-    <div className="mb-8">
-      {/* Results Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-2xl font-bold text-white">
-            Found <span className="text-green-400">{results.total_results || results.experts.length}</span> experts
-          </h3>
-          <p className="text-sm text-gray-400 mt-1">
-            Showing {results.experts.length} of {results.total_results || results.experts.length} results
-          </p>
-        </div>
-        
-        {/* Sort Options */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <button className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Relevance
-            </button>
-            <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
-              <Star className="w-4 h-4" />
-              Rating
-            </button>
-            <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
-              Price
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    {/* Results Grid */}
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      {results.experts.map((expert, idx) => (
-        <motion.div
-          key={`expert-${expert.id}-${idx}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: (idx % 10) * 0.05 }}
-        >
-          <EnhancedExpertCard 
-            expert={expert} 
-            onClick={() => setSelectedExpert(expert)}
-            onEmailClick={handleEmailClick}
-          />
-        </motion.div>
-      ))}
-    </div>
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
+                  <p className="text-gray-400">Finding the best experts for you...</p>
+                </div>
+              ) : results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 ? (
+                <div>
+                  <div className="mb-8">
+                    {/* Results Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="text-2xl font-bold text-white">
+                          Found <span className="text-green-400">{results.total_results}</span> experts
+                        </h3>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Showing {results.experts.length} of {results.total_results} results
+                        </p>
+                      </div>
+                      
+                      {/* Sort Options */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <button className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Relevance
+                          </button>
+                          <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
+                            <Star className="w-4 h-4" />
+                            Rating
+                          </button>
+                          <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                            Price
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
-    {/* Pagination */}
-    <div className="mt-12 flex justify-center">
-      {loading && currentPage > 1 ? (
-        <div className="px-6 py-3 bg-gray-800 rounded-lg flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Loading more experts...</span>
-        </div>
-      ) : hasMoreResults ? (
-        <button
-          onClick={loadMoreExperts}
-          className="px-8 py-3 bg-green-500 hover:bg-green-600 text-black font-medium rounded-lg transition-colors flex items-center gap-2"
-        >
-          Load More Experts
-          <span className="text-sm opacity-75">
-            (Page {currentPage + 1})
-          </span>
-        </button>
-      ) : results.experts.length >= 10 ? (
-        <p className="text-gray-500">
-          No more experts found for this search
-        </p>
-      ) : null}
-    </div>
-  </div>
-) : (
-  <div className="text-center py-16">
-    <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-    <h3 className="text-xl font-medium text-gray-400 mb-2">
-      {searchQuery ? 'No experts found' : 'Start your expert search'}
-    </h3>
-    <p className="text-gray-500">
-      {searchQuery 
-        ? 'Try adjusting your search terms or filters'
-        : 'Enter your query above to find the perfect expert for your needs'
-      }
-    </p>
-  </div>
-)}
+                    {/* Filters Summary */}
+                    {(searchQuery || searchMode === 'smart') && (
+                      <div className="flex items-center gap-3 mb-6">
+                        {searchQuery && (
+                          <div className="px-4 py-2 bg-gray-800 rounded-full text-sm text-gray-300 flex items-center gap-2">
+                            <span>Query: "{searchQuery}"</span>
+                            <button 
+                              onClick={() => {
+                                setSearchQuery('');
+                                setResults(null);
+                                setCurrentPage(1);
+                                setHasMoreResults(false);
+                                setAllExperts([]);
+                              }}
+                              className="text-gray-500 hover:text-white"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                        {searchMode === 'smart' && (
+                          <div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-sm text-green-400 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            AI-Matched
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Results Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {results.experts.map((expert, idx) => (
+                      <motion.div
+                        key={`expert-${expert.id}-${idx}`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: (idx % 10) * 0.05 }}
+                      >
+                        <EnhancedExpertCard 
+                          expert={expert} 
+                          onClick={() => setSelectedExpert(expert)}
+                          onEmailClick={handleEmailClick}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Load More Button */}
+                  <div className="mt-12 flex justify-center">
+                    {isLoadingMore ? (
+                      <div className="px-8 py-4 bg-gray-800 rounded-lg flex items-center gap-3">
+                        <Loader2 className="w-5 h-5 animate-spin text-green-400" />
+                        <span className="text-gray-300">Loading more experts...</span>
+                      </div>
+                    ) : hasMoreResults ? (
+                      <button
+                        onClick={loadMoreExperts}
+                        className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+                      >
+                        <span>Load More Experts</span>
+                        <span className="text-sm opacity-75 bg-black/20 px-2 py-1 rounded">
+                          Page {currentPage + 1}
+                        </span>
+                        <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
+                      </button>
+                    ) : results.experts.length >= 10 ? (
+                      <div className="text-center">
+                        <p className="text-gray-500 mb-2">
+                          You've viewed all {results.experts.length} experts
+                        </p>
+                        <button
+                          onClick={() => {
+                            setSearchQuery('');
+                            setResults(null);
+                            setCurrentPage(1);
+                            setHasMoreResults(false);
+                            setAllExperts([]);
+                          }}
+                          className="text-green-400 hover:text-green-300 text-sm"
+                        >
+                          Start a new search
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                  <h3 className="text-xl font-medium text-gray-400 mb-2">
+                    {searchQuery ? 'No experts found' : 'Start your expert search'}
+                  </h3>
+                  <p className="text-gray-500">
+                    {searchQuery 
+                      ? 'Try adjusting your search terms or filters'
+                      : 'Enter your query above to find the perfect expert for your needs'
+                    }
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -774,4 +840,3 @@ const loadMoreExperts = () => {
 }
 
 export default App;
-
