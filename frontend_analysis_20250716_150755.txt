@@ -1,0 +1,690 @@
+====================================
+Frontend Search Display Analysis
+Generated on: 2025年 7月16日 星期三 15时07分55秒 CST
+====================================
+
+
+====================================
+1. MAIN APP STRUCTURE
+====================================
+
+=== File: frontend/src/App.js ===
+SEARCH-RELATED IMPORTS:
+import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star } from 'lucide-react';
+import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
+import ExpertDetailModal from './components/modern/ExpertDetailModal';
+import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
+import strictExpertValidator from './utils/expertValidator';
+
+KEY FUNCTIONS/COMPONENTS:
+function App() {
+  const [activeTab, setActiveTab] = useState('discover');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const [selectedExpert, setSelectedExpert] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState('standard'); // standard or smart
+  const [selectedExpertForEmail, setSelectedExpertForEmail] = useState(null);
+  const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const handleSearch = async () => {
+    const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
+    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+      experts: filteredExperts,
+      total_results: filteredExperts.length
+  const handleSmartMatch = async () => {
+      const preferences = {
+      const data = await smartMatchExperts(searchQuery, preferences);
+      // Map the matches array to experts array with proper structure
+      const experts = data.matches ? data.matches.map((m, index) => ({
+          const name = (m.name || 'expert').toLowerCase().replace(/\s+/g, '.');
+          const domains = ['gmail.com', 'outlook.com', 'yahoo.com', 'protonmail.com', 'icloud.com'];
+          const domain = domains[Math.floor(Math.random() * domains.length)];
+          const areaCodes = ['415', '650', '408', '510', '925', '707', '831', '209', '559', '661'];
+          const areaCode = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+      console.log('Mapped experts:', experts);
+        experts: experts,
+        total_results: data.total || experts.length,
+        experts: [],
+
+API CALLS:
+import EmailComposer from './components/modern/EmailComposer';
+import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
+import strictExpertValidator from './utils/expertValidator';
+import './styles/globals.css';
+
+--
+  try {
+    const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
+    
+    // Apply strict filtering
+    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+
+RESULT DISPLAY LOGIC:
+    
+    // Apply strict filtering
+    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+    
+    setResults({
+      ...data,
+      experts: filteredExperts,
+      total_results: filteredExperts.length
+--
+      
+      // Map the matches array to experts array with proper structure
+      const experts = data.matches ? data.matches.map((m, index) => ({
+        id: m.id || `expert-${index}`,
+        name: m.name || 'Unknown Expert',
+        title: m.title || 'Expert',
+        bio: m.bio || 'No bio available',
+        skills: Array.isArray(m.skills) ? m.skills : [],
+--
+        match_reasons: m.match_reasons || [],
+        source: m.source,
+        profile_url: m.profile_url,
+        profile_image: m.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || 'Expert')}&background=10b981&color=fff&size=200`,
+        available_now: Math.random() > 0.5,
+        next_available: new Date(Date.now() + Math.random() * 86400000 * 7), // Random within next week
+        consultation_types: ['video', 'phone', 'chat'],
+        satisfaction_rate: Math.floor(Math.random() * 10) + 90, // Random 90-100
+        credibility_score: Math.floor(Math.random() * 10) + 85, // Random 85-95
+--
+          return `+1 (${areaCode}) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`;
+        })(),
+
+
+====================================
+2. SEARCH COMPONENTS
+====================================
+
+=== File: frontend/src/components/SearchBar.js ===
+SEARCH-RELATED IMPORTS:
+import SearchIcon from '@mui/icons-material/Search';
+
+KEY FUNCTIONS/COMPONENTS:
+function SearchBar({ onSearch }) {
+  const [query, setQuery] = useState('');
+  const [source, setSource] = useState('all');
+  const handleSubmit = (e) => {
+      onSearch(query, source);
+  return (
+        placeholder="Search for experts (e.g., 'geospatial AI expert')"
+export default SearchBar;
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+        >
+          <MenuItem value="all">All</MenuItem>
+          <MenuItem value="linkedin">LinkedIn</MenuItem>
+          <MenuItem value="scholar">Scholar</MenuItem>
+        </Select>
+      </FormControl>
+      
+      <Button
+
+=== File: frontend/src/components/ExpertResults.js ===
+SEARCH-RELATED IMPORTS:
+import ExpertCard from './ExpertCard';
+
+KEY FUNCTIONS/COMPONENTS:
+function ExpertResults({ results }) {
+  const linkedinExperts = results.experts.filter(e => e.source === 'linkedin');
+  const scholarExperts = results.experts.filter(e => e.source === 'scholar');
+  return (
+        Found {results.total_results} experts
+          <Tab>All ({results.experts.length})</Tab>
+            {results.experts.map((expert) => (
+export default ExpertResults;
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+
+function ExpertResults({ results }) {
+  const linkedinExperts = results.experts.filter(e => e.source === 'linkedin');
+  const scholarExperts = results.experts.filter(e => e.source === 'scholar');
+
+  return (
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Found {results.total_results} experts
+      </Typography>
+      
+      <Tabs>
+        <TabList>
+          <Tab>All ({results.experts.length})</Tab>
+          <Tab>LinkedIn ({linkedinExperts.length})</Tab>
+          <Tab>Scholar ({scholarExperts.length})</Tab>
+        </TabList>
+
+        <TabPanel>
+          <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+            {results.experts.map((expert) => (
+              <ExpertCard key={expert.id} expert={expert} />
+            ))}
+          </Box>
+        </TabPanel>
+
+        <TabPanel>
+          <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+            {linkedinExperts.map((expert) => (
+              <ExpertCard key={expert.id} expert={expert} />
+
+=== File: frontend/src/components/ExpertCard.js ===
+SEARCH-RELATED IMPORTS:
+
+KEY FUNCTIONS/COMPONENTS:
+function ExpertCard({ expert }) {
+  const credibilityColor = (score) => {
+  return (
+export default ExpertCard;
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+          <Box>
+            <Typography variant="h6" component="h3">
+              {expert.name}
+            </Typography>
+            <Typography color="text.secondary" gutterBottom>
+              {expert.title} {expert.organization && `at ${expert.organization}`}
+            </Typography>
+            
+            {expert.location && (
+              <Typography variant="body2" color="text.secondary">
+                📍 {expert.location}
+              </Typography>
+            )}
+            
+            {expert.bio && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {expert.bio}
+              </Typography>
+            )}
+            
+            <Box sx={{ mt: 1 }}>
+              {expert.skills.map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  size="small"
+                  sx={{ mr: 0.5, mb: 0.5 }}
+--
+              Credibility Score
+            </Typography>
+
+
+====================================
+3. MODERN SEARCH COMPONENTS
+====================================
+
+=== File: frontend/src/components/modern/ExpertSearchResults.js ===
+SEARCH-RELATED IMPORTS:
+import EnhancedExpertCard from './EnhancedExpertCard';
+
+KEY FUNCTIONS/COMPONENTS:
+const ExpertSearchResults = ({ experts, requirements, onExpertClick }) => {
+  const [selectedExpertForEmail, setSelectedExpertForEmail] = useState(null);
+  const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const handleExpertClick = (expert) => {
+  const handleEmailClick = (expert) => {
+  const handleEmailClose = () => {
+  const handleEmailSend = (emailContent) => {
+  return (
+        {experts.map((expert, idx) => (
+              onClick={() => handleExpertClick(expert)}
+export default ExpertSearchResults;
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {experts.map((expert, idx) => (
+          <motion.div
+            key={`expert-${expert.id}-${idx}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+          >
+            <EnhancedExpertCard
+
+=== File: frontend/src/components/modern/ExpertCard.jsx ===
+SEARCH-RELATED IMPORTS:
+
+KEY FUNCTIONS/COMPONENTS:
+const ExpertCard = ({ expert, onClick }) => {
+  const getSourceColor = (source) => {
+    const colors = {
+  return (
+      onClick={onClick}
+            onClick={(e) => {
+export default ExpertCard;
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+  const getSourceColor = (source) => {
+    const colors = {
+      linkedin: 'text-blue',
+      scholar: 'text-purple',
+      github: 'text-gray-400',
+      ai: 'text-green',
+      mock: 'text-yellow'
+    };
+    return colors[source] || 'text-gray-400';
+  };
+--
+        <div className="flex items-start space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-green to-green-dark rounded-full flex items-center justify-center font-bold text-lg text-black">
+            {expert.name.split(' ').map(n => n[0]).join('')}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-lg">{expert.name}</h3>
+              {expert.verified && <Shield className="w-4 h-4 text-green" />}
+              {expert.topExpert && <Award className="w-4 h-4 text-yellow" />}
+            </div>
+            <p className="text-sm text-gray-400">{expert.title}</p>
+            <p className="text-xs text-gray-500">{expert.organization || expert.company}</p>
+          </div>
+        </div>
+        
+        <div className="text-right">
+          {expert.rating && (
+            <div className="flex items-center gap-1 mb-1">
+              <Star className="w-4 h-4 text-yellow fill-current" />
+
+=== File: frontend/src/components/modern/EnhancedExpertCard.js ===
+SEARCH-RELATED IMPORTS:
+
+KEY FUNCTIONS/COMPONENTS:
+const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
+  const [imageError, setImageError] = useState(false);
+  const [coverImageError, setCoverImageError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isValidExpert = () => {
+    const name = expert.name?.toLowerCase() || '';
+    const title = expert.title?.toLowerCase() || '';
+    const invalidKeywords = [
+    const isArticleTitle = title.includes('how to') || title.includes('kick off') || title.includes('establish');
+  const formatPhone = (phone) => {
+    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+  const formatEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validEmail = formatEmail(expert.email);
+  const validPhone = formatPhone(expert.phone);
+  const matchPercentage = expert.relevance_score 
+  const rating = typeof expert.rating === 'number' ? expert.rating : parseFloat(expert.rating) || 4.5;
+  const totalReviews = expert.total_reviews || expert.social_proof?.[0]?.review_count || Math.floor(Math.random() * 500);
+  const getAvailabilityStatus = () => {
+      const hoursUntil = Math.round((new Date(expert.next_available) - new Date()) / (1000 * 60 * 60));
+  const availability = getAvailabilityStatus();
+  const primaryContact = expert.contacts?.find(c => c.preferred) || expert.contacts?.[0];
+  const profileImageUrl = expert.profile_image && !imageError 
+  const getCoverImage = () => {
+    const skills = expert.skills?.join(' ').toLowerCase() || '';
+  const getWebsiteData = () => {
+    const websites = [];
+    const uniqueWebsites = websites.filter((site, index, self) =>
+  const websiteData = getWebsiteData();
+  const CredentialBadges = () => {
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Validate if this is a real expert (not a course/company/article)
+  const isValidExpert = () => {
+    const name = expert.name?.toLowerCase() || '';
+    const title = expert.title?.toLowerCase() || '';
+    const invalidKeywords = [
+      'linkedin learning', 
+      'coursera', 
+      'framework', 
+      'platform', 
+      'udemy', 
+      'edx',
+--
+    ];
+    
+    // Check if it's an article title
+    const isArticleTitle = title.includes('how to') || title.includes('kick off') || title.includes('establish');
+    if (isArticleTitle) {
+      // Fix the title if it's from an article
+      expert.title = expert.originalTitle || 'Healthcare AI Expert';
+    }
+    
+    return !invalidKeywords.some(keyword => name.includes(keyword) || title.includes(keyword));
+  };
+
+--
+  };
+
+  const validEmail = formatEmail(expert.email);
+
+=== File: frontend/src/components/modern/ExpertDetailModal.js ===
+SEARCH-RELATED IMPORTS:
+
+KEY FUNCTIONS/COMPONENTS:
+const ExpertDetailModal = ({ expert, onClose }) => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [imageError, setImageError] = useState(false);
+  const [showAIAgent, setShowAIAgent] = useState(false);
+  const [showEmailAgent, setShowEmailAgent] = useState(false);
+  const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const rating = expert.rating || 4.5;
+  const totalReviews = expert.total_reviews || expert.social_proof?.[0]?.review_count || 0;
+  const getAvailabilityStatus = () => {
+      const hoursUntil = Math.round((new Date(expert.next_available) - new Date()) / (1000 * 60 * 60));
+  const availability = getAvailabilityStatus();
+  return (
+        onClick={onClose}
+            onClick={(e) => e.stopPropagation()}
+                  onClick={onClose}
+                    onClick={() => setActiveTab(tab)}
+                        const percentage = stars === 5 ? 60 : stars === 4 ? 25 : stars === 3 ? 10 : stars === 2 ? 3 : 2;
+                        return (
+                      onClick={() => {
+                      onClick={() => setShowEmailComposer(true)}
+                      onClick={() => setShowEmailAgent(true)}
+export default ExpertDetailModal;
+
+API CALLS:
+
+RESULT DISPLAY LOGIC:
+  if (!expert) return null;
+
+  const rating = expert.rating || 4.5;
+  const totalReviews = expert.total_reviews || expert.social_proof?.[0]?.review_count || 0;
+
+  const getAvailabilityStatus = () => {
+    if (expert.available_now) return { text: 'Available Now', color: 'text-green-400', bgColor: 'bg-green-400/10' };
+    if (expert.next_available) {
+      const hoursUntil = Math.round((new Date(expert.next_available) - new Date()) / (1000 * 60 * 60));
+      if (hoursUntil < 24) return { text: `Available in ${hoursUntil}h`, color: 'text-yellow-400', bgColor: 'bg-yellow-400/10' };
+    }
+    return { text: 'Check Availability', color: 'text-gray-400', bgColor: 'bg-gray-400/10' };
+  };
+
+--
+            <div className="relative">
+              <div className="h-48 bg-gradient-to-br from-green-600 to-emerald-700 relative">
+                {expert.cover_image && (
+                  <img 
+                    src={expert.cover_image} 
+                    alt="" 
+                    className="w-full h-full object-cover opacity-50"
+                  />
+                )}
+                <button
+--
+                    <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 p-0.5">
+                      <div className="w-full h-full rounded-2xl bg-gray-900 flex items-center justify-center text-3xl font-bold text-white overflow-hidden">
+                        {expert.profile_image && !imageError ? (
+                          <img 
+
+
+====================================
+4. API SERVICES
+====================================
+
+=== File: frontend/src/services/api.js ===
+SEARCH-RELATED IMPORTS:
+
+KEY FUNCTIONS/COMPONENTS:
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+const api = axios.create({
+export const modifyEmailWithAI = async (originalEmail, prompt, context) => {
+    const response = await api.post('/api/ai/modify-email', {
+export const searchExpertsWithEnhancedAccuracy = async (query, filters = {}) => {
+    const response = await api.post('/api/search/', {
+export const searchMarketplace = async (query, category = 'all', limit = 20) => {
+    const params = new URLSearchParams({
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/search?${params}`, {
+    const data = await response.json();
+export const searchExpertsEnhanced = async (query, category = 'all', limit = 20) => {
+    const response = await api.get('/experts-enhanced/search-enhanced', {
+      experts: response.data,
+      total_results: response.data.length,
+export const getExpertDetailed = async (expertId) => {
+    const response = await api.get(`/experts-enhanced/${expertId}/detailed`);
+export const searchExperts = async (query, category = 'all', limit = 20) => {
+export const smartMatchExperts = async (query, preferences) => {
+    const response = await axios.post(`${API_BASE_URL}/api/matching/smart-match`, {
+// Mock data function with enhanced expert information
+const getMockEnhancedExperts = (query) => {
+  const mockExperts = [
+  const filtered = mockExperts.filter(expert => 
+    experts: filtered.length > 0 ? filtered : mockExperts,
+    total_results: filtered.length > 0 ? filtered.length : mockExperts.length,
+export default api;
+
+API CALLS:
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://expert-finder.up.railway.app');
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+--
+  try {
+    const response = await api.post('/api/ai/modify-email', {
+      originalEmail,
+      prompt,
+      context
+--
+// Enhanced search with better accuracy
+export const searchExpertsWithEnhancedAccuracy = async (query, filters = {}) => {
+  try {
+    const response = await api.post('/api/search/', {
+
+RESULT DISPLAY LOGIC:
+      title: "Relationship Coach & Dating Expert",
+      bio: "As the leading love life expert and confidence coach, I've helped millions of women just like you get the love life of your dreams through my New York Times bestselling books, sold-out seminars, and viral online content.",
+      profile_image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+      cover_image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200",
+      contacts: [
+        {
+          method: "website",
+          value: "https://www.matthewhussey.com",
+--
+        },
+        {
+          method: "linkedin",
+          value: "https://linkedin.com/in/matthewhussey",
+          is_verified: true,
+          is_public: true
+        }
+      ],
+      booking_url: "https://calendly.com/matthewhussey/consultation",
+--
+          rating: 4.9,
+          review_count: 340,
+          url: "https://linkedin.com/in/matthewhussey"
+        }
+      ],
+      verified_expert: true,
+      available_now: true,
+      next_available: new Date(Date.now() + 3600000),
+--
+      last_active: new Date(),
+      member_since: new Date("2010-01-15"),
+
+=== Search API Endpoints ===
+frontend/src/services//api.js:    const response = await api.post('/api/search/', {
+frontend/src/services//api.js:    const response = await fetch(`${API_BASE_URL}/api/marketplace/search?${params}`, {
+frontend/src/services//api.js:    const response = await api.get('/experts-enhanced/search-enhanced', {
+frontend/src/services//api.js:export const getExpertDetailed = async (expertId) => {
+frontend/src/services//api.js:    const response = await api.get(`/experts-enhanced/${expertId}/detailed`);
+frontend/src/services//api.js:      bio: "As the leading love life expert and confidence coach, I've helped millions of women just like you get the love life of your dreams through my New York Times bestselling books, sold-out seminars, and viral online content.",
+
+
+====================================
+5. STATE MANAGEMENT
+====================================
+
+=== Checking for state management ===
+
+
+====================================
+6. SEARCH FLOW ANALYSIS
+====================================
+
+=== How search query flows through the app ===
+1. SearchBar component:
+function SearchBar({ onSearch }) {
+  const [query, setQuery] = useState('');
+  const [source, setSource] = useState('all');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim()) {
+      onSearch(query, source);
+    }
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 2, my: 3 }}>
+      <TextField
+        fullWidth
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search for experts (e.g., 'geospatial AI expert')"
+
+2. API call structure:
+
+// Enhanced search with better accuracy
+export const searchExpertsWithEnhancedAccuracy = async (query, filters = {}) => {
+  try {
+    const response = await api.post('/api/search/', {
+      query,
+      source: 'all',
+      limit: 20,
+      offset: 0,
+      filters
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Search error:', error);
+--
+    });
+    
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/search?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Marketplace search failed');
+    }
+    
+--
+
+// Enhanced search with rich data
+export const searchExpertsEnhanced = async (query, category = 'all', limit = 20) => {
+  try {
+    const response = await api.get('/experts-enhanced/search-enhanced', {
+      params: { q: query, category, limit }
+    });
+    return {
+      experts: response.data,
+      total_results: response.data.length,
+      query
+    };
+  } catch (error) {
+    console.error('Enhanced search error:', error);
+    // Fallback to mock data for demo
+--
+
+// Original functions kept for compatibility
+export const searchExperts = async (query, category = 'all', limit = 20) => {
+  return searchExpertsEnhanced(query, category, limit);
+};
+
+export const smartMatchExperts = async (query, preferences) => {
+  try {
+    console.log('Calling smart match API...');
+    // IMPORTANT: Make sure the URL includes /api/
+    const response = await axios.post(`${API_BASE_URL}/api/matching/smart-match`, {
+      query: query,
+      preferences: preferences
+    });
+
+3. Results display:
+frontend/src/components/ExpertResults.js:            {results.experts.map((expert) => (
+frontend/src/components/ExpertResults.js-              <ExpertCard key={expert.id} expert={expert} />
+frontend/src/components/ExpertResults.js-            ))}
+frontend/src/components/ExpertResults.js-          </Box>
+frontend/src/components/ExpertResults.js-        </TabPanel>
+frontend/src/components/ExpertResults.js-
+frontend/src/components/ExpertResults.js-        <TabPanel>
+frontend/src/components/ExpertResults.js-          <Box sx={{ display: 'grid', gap: 2, mt: 2 }}>
+frontend/src/components/ExpertResults.js-            {linkedinExperts.map((expert) => (
+frontend/src/components/ExpertResults.js-              <ExpertCard key={expert.id} expert={expert} />
+frontend/src/components/ExpertResults.js-            ))}
+--
+frontend/src/components/modern/ExpertSearchResults.js:        {experts.map((expert, idx) => (
+frontend/src/components/modern/ExpertSearchResults.js-          <motion.div
+frontend/src/components/modern/ExpertSearchResults.js-            key={`expert-${expert.id}-${idx}`}
+frontend/src/components/modern/ExpertSearchResults.js-            initial={{ opacity: 0, y: 20 }}
+frontend/src/components/modern/ExpertSearchResults.js-            animate={{ opacity: 1, y: 0 }}
+frontend/src/components/modern/ExpertSearchResults.js-            transition={{ delay: idx * 0.05 }}
+frontend/src/components/modern/ExpertSearchResults.js-          >
+frontend/src/components/modern/ExpertSearchResults.js-            <EnhancedExpertCard
+frontend/src/components/modern/ExpertSearchResults.js-              expert={expert}
+frontend/src/components/modern/ExpertSearchResults.js-              onClick={() => handleExpertClick(expert)}
+frontend/src/components/modern/ExpertSearchResults.js-              onEmailClick={handleEmailClick}
+
+====================================
+7. PROFILE TYPE HANDLING
+====================================
+
+=== Checking how frontend handles profile types ===
+frontend/src/components/ExpertCard.js:          {expert.linkedin_url && (
+frontend/src/components/ExpertCard.js:              href={expert.linkedin_url}
+frontend/src/components/SearchBar.js:          <MenuItem value="linkedin">LinkedIn</MenuItem>
+frontend/src/components/ExpertResults.js:  const linkedinExperts = results.experts.filter(e => e.source === 'linkedin');
+frontend/src/components/ExpertResults.js:          <Tab>LinkedIn ({linkedinExperts.length})</Tab>
+frontend/src/components/ExpertResults.js:            {linkedinExperts.map((expert) => (
+frontend/src/components/modern/WebsitePreview.js:      'linkedin.com': 'https://images.unsplash.com/photo-1611944212129-29977ae1398c?w=800&h=600&fit=crop',
+frontend/src/components/modern/WebsitePreview.js:      'github.com': 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=800&h=600&fit=crop',
+frontend/src/components/modern/EnhancedExpertCard.js:  // Validate if this is a real expert (not a course/company/article)
+frontend/src/components/modern/EnhancedExpertCard.js:      'linkedin learning', 
+frontend/src/components/modern/EnhancedExpertCard.js:    // Check if it's an article title
+frontend/src/components/modern/EnhancedExpertCard.js:      // Fix the title if it's from an article
+frontend/src/components/modern/EnhancedExpertCard.js:    if (expert.linkedin_url || expert.profile_url?.includes('linkedin.com/in/')) {
+frontend/src/components/modern/EnhancedExpertCard.js:        url: expert.linkedin_url || expert.profile_url,
+frontend/src/components/modern/EnhancedExpertCard.js:          {expert.linkedin_url || primaryContact?.method === 'linkedin' && (
+frontend/src/components/modern/EnhancedExpertCard.js:              href={expert.linkedin_url || primaryContact?.value} 
+frontend/src/components/modern/ExpertDetailModal.js:                      {expert.linkedin || expert.contacts?.find(c => c.method === 'linkedin') ? (
+frontend/src/components/modern/ExpertDetailModal.js:                          href={expert.linkedin || expert.contacts.find(c => c.method === 'linkedin')?.value}
+frontend/src/components/modern/ExpertCard.jsx:      linkedin: 'text-blue',
+frontend/src/components/modern/ExpertCard.jsx:      github: 'text-gray-400',
+
+====================================
+8. RELEVANT DEPENDENCIES
+====================================
+
+=== Search/UI related packages ===
+    "@tailwindcss/forms": "^0.5.7",
+    "axios": "^1.10.0",
+    "react-query": "^3.39.3",
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/postcss": "^4.1.11",
+
+====================================
+ANALYSIS SUMMARY
+====================================
+Total files analyzed:       19
+Search-related components found:
+       8

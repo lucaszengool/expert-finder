@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star } from 'lucide-react';
+import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User } from 'lucide-react';
+import { ClerkProvider, SignInButton, SignUpButton, UserButton, useUser, useClerk } from "@clerk/clerk-react";
 import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
 import Marketplace from './components/modern/Marketplace';
 import LearningHub from './components/modern/LearningHub';
@@ -10,7 +11,34 @@ import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
 import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 
+// Get Clerk publishable key from environment
+const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+
+// Main App wrapped with Clerk
 function App() {
+  if (!clerkPubKey) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Configuration Error</h1>
+          <p className="text-gray-400">Please add REACT_APP_CLERK_PUBLISHABLE_KEY to your .env file</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <AppContent />
+    </ClerkProvider>
+  );
+}
+
+// Main App Content
+function AppContent() {
+  const { isSignedIn, user, isLoaded } = useUser();
+  const { openSignIn } = useClerk();
+  
   const [activeTab, setActiveTab] = useState('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -25,35 +53,41 @@ function App() {
   const [showEmailComposer, setShowEmailComposer] = useState(false);
 
   const handleSearch = async () => {
-  if (!searchQuery.trim()) return;
-  
-  setLoading(true);
-  try {
-    const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
+    if (!searchQuery.trim()) return;
     
-    // Apply strict filtering
-    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
-    
-    setResults({
-      ...data,
-      experts: filteredExperts,
-      total_results: filteredExperts.length
-    });
-    
-    setSearchMode('standard');
-  } catch (error) {
-    console.error('Search failed:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
+      
+      // Apply strict filtering
+      const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+      
+      setResults({
+        ...data,
+        experts: filteredExperts,
+        total_results: filteredExperts.length
+      });
+      
+      setSearchMode('standard');
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSmartMatch = async () => {
+    // Check if user is signed in for AI features
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+
     setLoading(true);
     setSearchMode('smart');
     try {
       const preferences = {
-        user_id: 'demo-user',
+        user_id: user.id, // Use actual Clerk user ID
         preferred_work_styles: ['analytical', 'collaborative'],
         preferred_communication_styles: ['direct', 'technical'],
         budget_range: { min: 100, max: 500 },
@@ -75,8 +109,8 @@ function App() {
         title: m.title || 'Expert',
         bio: m.bio || 'No bio available',
         skills: Array.isArray(m.skills) ? m.skills : [],
-        hourly_rate: m.hourly_rate || Math.floor(Math.random() * 300) + 150, // Random between 150-450
-        rating: m.rating || parseFloat((Math.random() * 1 + 4).toFixed(1)), // Random between 4.0-5.0
+        hourly_rate: m.hourly_rate || Math.floor(Math.random() * 300) + 150,
+        rating: m.rating || parseFloat((Math.random() * 1 + 4).toFixed(1)),
         total_reviews: m.total_reviews || Math.floor(Math.random() * 500),
         availability: m.availability || 'check_availability',
         response_time: m.response_time || '24 hours',
@@ -84,7 +118,7 @@ function App() {
         timezone: m.timezone || 'PST',
         languages: m.languages || ['English'],
         certifications: m.certifications || [],
-        years_of_experience: m.years_of_experience || Math.floor(Math.random() * 10) + 3, // Random 3-13
+        years_of_experience: m.years_of_experience || Math.floor(Math.random() * 10) + 3,
         portfolio_items: m.portfolio_items || [],
         work_style_scores: m.work_style_scores || {
           analytical: Math.floor(Math.random() * 30) + 70,
@@ -99,11 +133,11 @@ function App() {
         profile_url: m.profile_url,
         profile_image: m.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || 'Expert')}&background=10b981&color=fff&size=200`,
         available_now: Math.random() > 0.5,
-        next_available: new Date(Date.now() + Math.random() * 86400000 * 7), // Random within next week
+        next_available: new Date(Date.now() + Math.random() * 86400000 * 7),
         consultation_types: ['video', 'phone', 'chat'],
-        satisfaction_rate: Math.floor(Math.random() * 10) + 90, // Random 90-100
-        credibility_score: Math.floor(Math.random() * 10) + 85, // Random 85-95
-        total_consultations: Math.floor(Math.random() * 2000) + 500, // Random 500-2500
+        satisfaction_rate: Math.floor(Math.random() * 10) + 90,
+        credibility_score: Math.floor(Math.random() * 10) + 85,
+        total_consultations: Math.floor(Math.random() * 2000) + 500,
         
         // Enhanced data for better UX
         email: m.email || (() => {
@@ -194,6 +228,10 @@ function App() {
 
   // Email handler functions
   const handleEmailClick = (expert) => {
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
     setSelectedExpertForEmail(expert);
     setShowEmailComposer(true);
   };
@@ -205,8 +243,6 @@ function App() {
 
   const handleEmailSend = (emailContent) => {
     console.log('Email sent:', emailContent);
-    // You can add a toast notification here
-    // toast.success('Email sent successfully!');
     handleEmailClose();
   };
 
@@ -216,6 +252,15 @@ function App() {
       handleSearch();
     }
   }, []);
+
+  // Show loading state while Clerk is loading
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -252,16 +297,49 @@ function App() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="relative text-gray-400 hover:text-white hidden md:block">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></span>
-              </button>
-              <button className="text-gray-400 hover:text-white hidden md:block">
-                <Settings className="w-5 h-5" />
-              </button>
-              <button className="btn-primary hidden md:block">
-                Sign In
-              </button>
+              {isSignedIn && (
+                <>
+                  <button className="relative text-gray-400 hover:text-white hidden md:block">
+                    <Bell className="w-5 h-5" />
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+                  </button>
+                  <button className="text-gray-400 hover:text-white hidden md:block">
+                    <Settings className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+              
+              {/* Auth Section */}
+              {isSignedIn ? (
+                <div className="flex items-center gap-4">
+                  <span className="text-gray-300 hidden md:block">
+                    Welcome, {user.firstName || user.username || 'User'}
+                  </span>
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-8 h-8",
+                        userButtonPopoverCard: "bg-gray-900 border border-gray-700",
+                        userButtonPopoverActionButton: "hover:bg-gray-800"
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <SignInButton mode="modal">
+                    <button className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors hidden md:block">
+                      Sign In
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button className="px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-black rounded-lg font-medium transition-colors">
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                </div>
+              )}
               
               {/* Mobile menu button */}
               <button
@@ -298,6 +376,19 @@ function App() {
                     {tab.replace('-', ' ')}
                   </button>
                 ))}
+                
+                {/* Mobile Auth */}
+                {!isSignedIn && (
+                  <>
+                    <div className="pt-2 mt-2 border-t border-gray-700">
+                      <SignInButton mode="modal">
+                        <button className="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800">
+                          Sign In
+                        </button>
+                      </SignInButton>
+                    </div>
+                  </>
+                )}
               </nav>
             </motion.div>
           )}
@@ -339,6 +430,7 @@ function App() {
                     <button 
                       onClick={handleSmartMatch}
                       className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-medium px-6 py-3 rounded-r-xl transition-all duration-300 flex items-center space-x-2"
+                      title={!isSignedIn ? "Sign in to use AI matching" : "Use AI to find the perfect expert"}
                     >
                       <Sparkles className="w-4 h-4" />
                       <span className="hidden sm:inline">Smart Search</span>
@@ -481,55 +573,7 @@ function App() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {(() => {
                       try {
-                        console.log("=== DEBUGGING EXPERTS RENDER ===");
-                        console.log("Results object:", results);
-                        console.log("Results type:", typeof results);
-                        console.log("Results.experts:", results?.experts);
-                        console.log("Is experts an array?", Array.isArray(results?.experts));
-                        console.log("Experts length:", results?.experts?.length);
-                        
-                        if (!results || !results.experts || !Array.isArray(results.experts)) {
-                          console.log("No valid experts array found");
-                          return (
-                            <div className="col-span-full text-center py-8">
-                              <p className="text-gray-400">No experts data available</p>
-                            </div>
-                          );
-                        }
-                        
-                        const validExperts = results.experts.filter(expert => {
-                          // Additional runtime validation
-                          const isValid = strictExpertValidator.isValidExpert(expert);
-                          if (!isValid) {
-                            console.log('Filtering out invalid expert:', expert.name, expert.profile_url);
-                          }
-                          return isValid;
-                        });
-                        
-                        for (let i = 0; i < results.experts.length; i++) {
-                          const expert = results.experts[i];
-                          console.log(`Checking expert at index ${i}:`, expert);
-                          
-                          if (!expert) {
-                            console.log(`Expert at index ${i} is null/undefined`);
-                            continue;
-                          }
-                          
-                          if (typeof expert !== 'object') {
-                            console.log(`Expert at index ${i} is not an object:`, typeof expert);
-                            continue;
-                          }
-                          
-                          if (!expert.id) {
-                            console.log(`Expert at index ${i} has no id:`, expert);
-                            continue;
-                          }
-                          
-                          validExperts.push(expert);
-                        }
-                        
-                        console.log("Valid experts count:", validExperts.length);
-                        console.log("Valid experts:", validExperts);
+                        const validExperts = results.experts.filter(expert => strictExpertValidator.isValidExpert(expert));
                         
                         if (validExperts.length === 0) {
                           return (
@@ -555,7 +599,6 @@ function App() {
                         ));
                       } catch (error) {
                         console.error("Error rendering experts:", error);
-                        console.error("Error stack:", error.stack);
                         return (
                           <div className="col-span-full text-center py-8">
                             <p className="text-gray-400">Error loading experts</p>
@@ -618,60 +661,84 @@ function App() {
               exit={{ opacity: 0, y: -20 }}
               className="max-w-3xl mx-auto"
             >
-              <h2 className="text-3xl font-bold mb-6 text-center">AI-Powered Expert Matching</h2>
-              <p className="text-gray-400 mb-8 text-center">
-                Let our AI find the perfect expert based on your specific needs
-              </p>
+              {isSignedIn ? (
+                <>
+                  <h2 className="text-3xl font-bold mb-6 text-center">AI-Powered Expert Matching</h2>
+                  <p className="text-gray-400 mb-8 text-center">
+                    Let our AI find the perfect expert based on your specific needs
+                  </p>
 
-              <div className="card">
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">What expertise do you need?</label>
-                    <textarea 
-                      className="input w-full"
-                      rows={4}
-                      placeholder="Describe your project, challenge, or learning goals..."
-                    />
-                  </div>
+                  <div className="card">
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">What expertise do you need?</label>
+                        <textarea 
+                          className="input w-full"
+                          rows={4}
+                          placeholder="Describe your project, challenge, or learning goals..."
+                        />
+                      </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Budget Range</label>
-                      <select className="input w-full">
-                        <option>$100 - $300/hr</option>
-                        <option>$300 - $500/hr</option>
-                        <option>$500+/hr</option>
-                      </select>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Budget Range</label>
+                          <select className="input w-full">
+                            <option>$100 - $300/hr</option>
+                            <option>$300 - $500/hr</option>
+                            <option>$500+/hr</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Timeline</label>
+                          <select className="input w-full">
+                            <option>ASAP</option>
+                            <option>This Week</option>
+                            <option>This Month</option>
+                            <option>Flexible</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Preferred Work Style</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {['Collaborative', 'Independent', 'Structured', 'Flexible'].map((style) => (
+                            <label key={style} className="flex items-center space-x-2 cursor-pointer">
+                              <input type="checkbox" className="rounded border-gray-700" />
+                              <span className="text-sm">{style}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button className="w-full btn-primary py-3 flex items-center justify-center space-x-2">
+                        <Sparkles className="w-5 h-5" />
+                        <span>Find My Perfect Match</span>
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Timeline</label>
-                      <select className="input w-full">
-                        <option>ASAP</option>
-                        <option>This Week</option>
-                        <option>This Month</option>
-                        <option>Flexible</option>
-                      </select>
-                    </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Preferred Work Style</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {['Collaborative', 'Independent', 'Structured', 'Flexible'].map((style) => (
-                        <label key={style} className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" className="rounded border-gray-700" />
-                          <span className="text-sm">{style}</span>
-                        </label>
-                      ))}
-                    </div>
+                </>
+              ) : (
+                <div className="text-center py-16">
+                  <Sparkles className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold mb-2">Sign in to use AI Matching</h3>
+                  <p className="text-gray-400 mb-6">
+                    Get personalized expert recommendations based on your specific needs
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <SignInButton mode="modal">
+                      <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                        Sign In
+                      </button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <button className="px-6 py-3 bg-green-500 hover:bg-green-600 text-black rounded-lg font-medium transition-colors">
+                        Create Account
+                      </button>
+                    </SignUpButton>
                   </div>
-
-                  <button className="w-full btn-primary py-3 flex items-center justify-center space-x-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span>Find My Perfect Match</span>
-                  </button>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -698,9 +765,10 @@ function App() {
             timeline: "flexible",
             budget: { ideal: 500 },
             userInfo: {
-              name: "Your Name",
+              name: user?.fullName || user?.firstName || "Your Name",
               title: "Your Title", 
-              company: "Your Company"
+              company: "Your Company",
+              email: user?.emailAddresses?.[0]?.emailAddress || "your@email.com"
             }
           }}
           onClose={handleEmailClose}
