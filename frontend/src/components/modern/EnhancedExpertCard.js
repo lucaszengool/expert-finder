@@ -1,6 +1,7 @@
 // EnhancedExpertCard.js - Save this in src/components/modern/EnhancedExpertCard.js
 
 import React, { useState } from 'react';
+import WebsitePreview from './WebsitePreview';
 import { motion } from 'framer-motion';
 import { 
   Star, MapPin, Clock, DollarSign, Calendar, 
@@ -403,6 +404,12 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
         {/* Action Buttons */}
         <div className="space-y-2">
+          <div className="mt-6">
+          <WebsitePreview 
+            websites={websiteData} 
+            expert={expert}
+          />
+        </div>
           <button
             onClick={() => onClick(expert)}
             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-black font-medium py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"

@@ -51,30 +51,55 @@ function AppContent() {
   // Email composer states
   const [selectedExpertForEmail, setSelectedExpertForEmail] = useState(null);
   const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [allExperts, setAllExperts] = useState([]);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (page = 1) => {
+  if (!searchQuery.trim()) return;
+  
+  setLoading(true);
+  try {
+    const offset = (page - 1) * 10;
+    const data = await searchExpertsEnhanced(searchQuery, 'all', 10, offset);
     
-    setLoading(true);
-    try {
-      const data = await searchExpertsEnhanced(searchQuery, 'all', 20);
-      
-      // Apply strict filtering
-      const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
-      
+    // Apply strict filtering
+    const filteredExperts = strictExpertValidator.filterExperts(data.experts || []);
+    
+    if (page === 1) {
+      // First page - replace results
+      setAllExperts(filteredExperts);
       setResults({
         ...data,
         experts: filteredExperts,
-        total_results: filteredExperts.length
+        total_results: data.total_results
       });
-      
-      setSearchMode('standard');
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setLoading(false);
+    } else {
+      // Subsequent pages - append results
+      const newExperts = [...allExperts, ...filteredExperts];
+      setAllExperts(newExperts);
+      setResults({
+        ...data,
+        experts: newExperts,
+        total_results: data.total_results
+      });
     }
-  };
+    
+    setCurrentPage(page);
+    setHasMoreResults(data.has_more && filteredExperts.length > 0);
+    setSearchMode('standard');
+  } catch (error) {
+    console.error('Search failed:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const loadMoreExperts = () => {
+  handleSearch(currentPage + 1);
+};
+
+  
 
   const handleSmartMatch = async () => {
     // Check if user is signed in for AI features
@@ -503,131 +528,100 @@ function AppContent() {
               </div>
 
               {/* Results */}
-              {loading ? (
-                <div className="text-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
-                  <p className="text-gray-400">Finding the best experts for you...</p>
-                </div>
-              ) : results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 ? (
-                <div>
-                  <div className="mb-8">
-                    {/* Results Header */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-white">
-                          Found <span className="text-green-400">{results.total_results || results.experts.length}</span> experts
-                        </h3>
-                        {searchMode === 'smart' && (
-                          <p className="text-sm text-gray-400 mt-1">
-                            AI-sorted by relevance to your needs
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Sort Options */}
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <button className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" />
-                            Relevance
-                          </button>
-                          <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
-                            <Star className="w-4 h-4" />
-                            Rating
-                          </button>
-                          <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
-                            Price
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+              {loading && currentPage === 1 ? (
+  <div className="text-center py-12">
+    <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
+    <p className="text-gray-400">Finding the best experts for you...</p>
+  </div>
+) : results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 ? (
+  <div>
+    <div className="mb-8">
+      {/* Results Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-2xl font-bold text-white">
+            Found <span className="text-green-400">{results.total_results || results.experts.length}</span> experts
+          </h3>
+          <p className="text-sm text-gray-400 mt-1">
+            Showing {results.experts.length} of {results.total_results || results.experts.length} results
+          </p>
+        </div>
+        
+        {/* Sort Options */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <button className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Relevance
+            </button>
+            <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
+              <Star className="w-4 h-4" />
+              Rating
+            </button>
+            <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+              Price
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Results Grid */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      {results.experts.map((expert, idx) => (
+        <motion.div
+          key={`expert-${expert.id}-${idx}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: (idx % 10) * 0.05 }}
+        >
+          <EnhancedExpertCard 
+            expert={expert} 
+            onClick={() => setSelectedExpert(expert)}
+            onEmailClick={handleEmailClick}
+          />
+        </motion.div>
+      ))}
+    </div>
 
-                    {/* Filters Summary */}
-                    {(searchQuery || searchMode === 'smart') && (
-                      <div className="flex items-center gap-3 mb-6">
-                        {searchQuery && (
-                          <div className="px-4 py-2 bg-gray-800 rounded-full text-sm text-gray-300 flex items-center gap-2">
-                            <span>Query: "{searchQuery}"</span>
-                            <button 
-                              onClick={() => {
-                                setSearchQuery('');
-                                setResults(null);
-                              }}
-                              className="text-gray-500 hover:text-white"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        {searchMode === 'smart' && (
-                          <div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-sm text-green-400 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" />
-                            AI-Matched
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Results Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {(() => {
-                      try {
-                        const validExperts = results.experts.filter(expert => strictExpertValidator.isValidExpert(expert));
-                        
-                        if (validExperts.length === 0) {
-                          return (
-                            <div className="col-span-full text-center py-8">
-                              <p className="text-gray-400">No valid experts found</p>
-                            </div>
-                          );
-                        }
-                        
-                        return validExperts.map((expert, idx) => (
-                          <motion.div
-                            key={`expert-${expert.id}-${idx}`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                          >
-                            <EnhancedExpertCard 
-                              expert={expert} 
-                              onClick={() => expert && setSelectedExpert(expert)}
-                              onEmailClick={handleEmailClick}
-                            />
-                          </motion.div>
-                        ));
-                      } catch (error) {
-                        console.error("Error rendering experts:", error);
-                        return (
-                          <div className="col-span-full text-center py-8">
-                            <p className="text-gray-400">Error loading experts</p>
-                          </div>
-                        );
-                      }
-                    })()}
-                  </div>
-
-                  {/* Load More */}
-                  {results.experts.length >= 20 && (
-                    <div className="mt-8 text-center">
-                      <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
-                        Load More Experts
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                  <h3 className="text-xl font-medium text-gray-400 mb-2">
-                    Start your expert search
-                  </h3>
-                  <p className="text-gray-500">
-                    Enter your query above to find the perfect expert for your needs
-                  </p>
-                </div>
-              )}
+    {/* Pagination */}
+    <div className="mt-12 flex justify-center">
+      {loading && currentPage > 1 ? (
+        <div className="px-6 py-3 bg-gray-800 rounded-lg flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Loading more experts...</span>
+        </div>
+      ) : hasMoreResults ? (
+        <button
+          onClick={loadMoreExperts}
+          className="px-8 py-3 bg-green-500 hover:bg-green-600 text-black font-medium rounded-lg transition-colors flex items-center gap-2"
+        >
+          Load More Experts
+          <span className="text-sm opacity-75">
+            (Page {currentPage + 1})
+          </span>
+        </button>
+      ) : results.experts.length >= 10 ? (
+        <p className="text-gray-500">
+          No more experts found for this search
+        </p>
+      ) : null}
+    </div>
+  </div>
+) : (
+  <div className="text-center py-16">
+    <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+    <h3 className="text-xl font-medium text-gray-400 mb-2">
+      {searchQuery ? 'No experts found' : 'Start your expert search'}
+    </h3>
+    <p className="text-gray-500">
+      {searchQuery 
+        ? 'Try adjusting your search terms or filters'
+        : 'Enter your query above to find the perfect expert for your needs'
+      }
+    </p>
+  </div>
+)}
             </motion.div>
           )}
 

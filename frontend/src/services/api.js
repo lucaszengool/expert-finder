@@ -31,6 +31,9 @@ export const modifyEmailWithAI = async (originalEmail, prompt, context) => {
 
 
 
+
+
+
 // Enhanced search with better accuracy
 export const searchExpertsWithEnhancedAccuracy = async (query, filters = {}) => {
   try {
@@ -79,20 +82,44 @@ export const searchMarketplace = async (query, category = 'all', limit = 20) => 
 };
 
 // Enhanced search with rich data
-export const searchExpertsEnhanced = async (query, category = 'all', limit = 20) => {
+export const searchExpertsEnhanced = async (query, category = 'all', limit = 10, offset = 0) => {
   try {
-    const response = await api.get('/experts-enhanced/search-enhanced', {
-      params: { q: query, category, limit }
+    const response = await api.get('/api/search/', {
+      params: { 
+        query, 
+        category, 
+        limit,
+        offset,
+        source: 'all'
+      }
     });
+    
+    // Ensure we have the profile_type field for filtering
+    const enhancedExperts = (response.data.experts || []).map(expert => ({
+      ...expert,
+      profile_type: expert.profile_type || 'unknown',
+      is_verified_profile: expert.is_verified_profile || false,
+      website: expert.website || expert.url || expert.profile_url,
+      websites: expert.websites || []
+    }));
+    
     return {
-      experts: response.data,
-      total_results: response.data.length,
-      query
+      experts: enhancedExperts,
+      total_results: response.data.total || enhancedExperts.length,
+      query,
+      offset,
+      has_more: enhancedExperts.length === limit
     };
   } catch (error) {
     console.error('Enhanced search error:', error);
-    // Fallback to mock data for demo
-    return getMockEnhancedExperts(query);
+    // Return empty results instead of mock data
+    return {
+      experts: [],
+      total_results: 0,
+      query,
+      offset,
+      has_more: false
+    };
   }
 };
 
