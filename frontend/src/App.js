@@ -12,7 +12,7 @@ import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 
 // Get Clerk publishable key from environment
-const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+const clerkPubKey = "sk_test_yb3Y5K9yr88rLPXyO94zwKIrDg4lyVpdVPRMw7RaHY";
 
 // Main App wrapped with Clerk
 function App() {
