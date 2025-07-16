@@ -11,7 +11,6 @@ import {
   ChevronRight, ExternalLink, Sparkles,
   Building, GraduationCap, Camera
 } from 'lucide-react';
-import WebsitePreview from './WebsitePreview';
 
 const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   const [imageError, setImageError] = useState(false);
