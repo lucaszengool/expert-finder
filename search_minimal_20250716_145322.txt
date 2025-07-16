@@ -1,0 +1,37 @@
+Creating minimal version for quick review...
+
+1. SEARCH FUNCTION SIGNATURES:
+backend/app/services/enhanced_search_service.py:    async def search_experts(self, query: str, filters: Optional[Dict] = None) -> List[Dict]:
+backend/app/services/search_service.py:    async def search(
+backend/app/services/search_service.py:    async def _google_custom_search(self, query: str, limit: int) -> List[Dict]:
+backend/app/services/search_service.py:    async def search_with_enhanced_accuracy(
+backend/app/services/search_service.py:    async def search_verified_experts_only(
+backend/app/services/search_service.py:    async def _search_linkedin_profiles_directly(self, query: str, limit: int) -> List[Dict]:
+backend/app/services/search_service.py:    async def vector_search(
+backend/app/services/search_service.py:    async def get_trending_searches(self, limit: int = 10) -> List[str]:
+backend/app/services/profile_validator.py:    def extract_profile_from_search_result(self, search_result: Dict) -> Optional[Dict]:
+backend/app/services/expert_service.py:    def search_experts(self, query: str, source: str = "all", limit: int = 10) -> List[Expert]:
+backend/app/services/expert_service.py:async def search_experts_enhanced(self, query: str, category: str = None, limit: int = 20) -> List[Dict]:
+
+2. EXPERT MODEL FIELDS:
+backend/app/models/db_models.py-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+backend/app/models/db_models.py-    name = Column(String, nullable=False)
+backend/app/models/db_models.py-    title = Column(String)
+backend/app/models/db_models.py-    email = Column(String)
+backend/app/models/db_models.py-    location = Column(String)
+backend/app/models/db_models.py-    organization = Column(String)
+backend/app/models/db_models.py-    bio = Column(Text)
+backend/app/models/db_models.py-    skills = Column(JSON)
+backend/app/models/db_models.py-    experience = Column(JSON)
+backend/app/models/db_models.py-    links = Column(JSON)
+backend/app/models/db_models.py-    created_at = Column(DateTime, server_default=func.now())
+backend/app/models/db_models.py-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+backend/app/models/db_models.py-    embedding = Column(JSON)  # Store embeddings for similarity search
+backend/app/models/db_models.py-    expertise_level = Column(Integer)  # 1-5 scale
+
+3. DATA SOURCE TYPES:
+backend/app/services/search_service.py:                            'source_type': 'linkedin_profile',
+backend/app/services/profile_validator.py:            expert_data['source_type'] = 'linkedin_profile'
+backend/app/services/profile_validator.py:                expert_data['source_type'] = 'verified_profile'
+backend/app/services/profile_validator.py:            expert_data['source_type'] = 'personal_website'
+backend/app/services/profile_validator.py:                    'source_type': 'linkedin_profile',

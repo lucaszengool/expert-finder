@@ -218,6 +218,33 @@ class EnhancedSearchService:
         
         return scored_experts[:20]  # Return top 20 results
     
+    def _score_profile_quality(self, expert: Dict) -> float:
+        """Score the quality of an expert profile (0-1)"""
+        score = 0.0
+        
+        # Check for verified profile
+        if expert.get('is_verified_profile'):
+            score += 0.3
+        
+        # Check profile type
+        profile_type = expert.get('profile_type', 'unknown')
+        if profile_type in ['linkedin', 'github', 'researchgate']:
+            score += 0.2
+        elif profile_type == 'professional':
+            score += 0.1
+        
+        # Check for complete information
+        if expert.get('name') and expert.get('title'):
+            score += 0.1
+        if expert.get('skills') and len(expert.get('skills', [])) > 0:
+            score += 0.1
+        if expert.get('bio') and len(expert.get('bio', '')) > 50:
+            score += 0.1
+        if expert.get('url') and not any(bad in expert.get('url', '') for bad in ['/article/', '/blog/', '/news/']):
+            score += 0.2
+        
+        return min(score, 1.0)
+    
     def _calculate_relevance_score(self, expert: Dict, query_words: List[str], 
                                    special_keywords: List[tuple], query_lower: str) -> float:
         """
@@ -268,7 +295,10 @@ class EnhancedSearchService:
                 score += 2.0
         
         # Normalize score
-        return min(score / 10.0, 1.0)  # Cap at 1.0
+        profile_quality = self._score_profile_quality(expert)
+        score = score * 0.7 + profile_quality * 0.3  # 70% relevance, 30% profile quality
+
+        return min(score, 1.0)
     
     def _get_match_reasons(self, expert: Dict, query_lower: str, query_words: List[str]) -> List[str]:
         """

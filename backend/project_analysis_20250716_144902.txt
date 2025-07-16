@@ -1,0 +1,122 @@
+====================================
+Project Analysis Report
+Generated on: 2025年 7月16日 星期三 14时49分02秒 CST
+====================================
+
+
+====================================
+1. BACKEND STRUCTURE & SEARCH FILES
+====================================
+
+Finding all search-related Python files...
+
+====================================
+2. SEARCH SERVICE IMPLEMENTATIONS
+====================================
+
+=== File: backend/app/services/search_service.py (NOT FOUND) ===
+=== File: backend/app/services/enhanced_search_service.py (NOT FOUND) ===
+=== File: backend/app/services/vector_search.py (NOT FOUND) ===
+=== File: backend/app/services/matching_service.py (NOT FOUND) ===
+=== File: backend/app/services/expert_service.py (NOT FOUND) ===
+
+====================================
+3. API ENDPOINTS
+====================================
+
+=== File: backend/app/api/search.py (NOT FOUND) ===
+=== File: backend/app/api/experts.py (NOT FOUND) ===
+=== File: backend/app/api/enhanced_experts.py (NOT FOUND) ===
+=== File: backend/app/api/matching.py (NOT FOUND) ===
+
+====================================
+4. DATA MODELS
+====================================
+
+=== File: backend/app/models/search.py (NOT FOUND) ===
+=== File: backend/app/models/expert.py (NOT FOUND) ===
+=== File: backend/app/models/db_models.py (NOT FOUND) ===
+=== File: backend/app/models/expert_dna.py (NOT FOUND) ===
+
+====================================
+5. UTILITIES
+====================================
+
+=== File: backend/app/utils/embeddings.py (NOT FOUND) ===
+=== File: backend/app/utils/database.py (NOT FOUND) ===
+
+====================================
+6. DATABASE SCHEMA & DATA PROCESSING
+====================================
+
+=== Data Processing Directory ===
+
+
+====================================
+7. CONFIGURATION FILES
+====================================
+
+=== File: backend/requirements.txt (NOT FOUND) ===
+=== File: backend/app/main.py (NOT FOUND) ===
+=== Looking for config files ===
+
+====================================
+8. SEARCH ALGORITHM DETAILS
+====================================
+
+=== Grep for ranking/scoring logic ===
+
+====================================
+9. DATA SOURCES & SCRAPING
+====================================
+
+=== File: backend/app/services/linkedin_scraper.py (NOT FOUND) ===
+=== File: backend/app/services/linkedin_profile_extractor.py (NOT FOUND) ===
+=== File: backend/app/agents/web_search_agent.py (NOT FOUND) ===
+=== File: backend/app/agents/scholar_agent.py (NOT FOUND) ===
+
+====================================
+10. TEST FILES
+====================================
+
+=== Finding test files ===
+
+====================================
+11. DEBUG AND FIX SCRIPTS
+====================================
+
+=== Listing fix/debug scripts ===
+
+
+====================================
+12. PROJECT STRUCTURE
+====================================
+
+=== Backend Python File Tree ===
+Tree command not found, using find instead:
+
+====================================
+13. IMPORTS ANALYSIS
+====================================
+
+=== Search-related imports ===
+
+====================================
+14. DATABASE MIGRATIONS
+====================================
+
+=== Alembic migrations ===
+
+====================================
+15. FRONTEND SEARCH (if accessible)
+====================================
+
+=== Looking for frontend search implementations ===
+Note: Adjust paths if frontend is in a different location
+
+====================================
+ANALYSIS COMPLETE
+====================================
+
+Total lines in report:      120
+Report generated successfully!

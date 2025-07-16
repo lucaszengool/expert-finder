@@ -1,0 +1,491 @@
+====================================
+Search System Analysis Report
+Generated on: 2025年 7月16日 星期三 14时53分22秒 CST
+====================================
+
+
+========== 1. CORE SEARCH IMPLEMENTATION ==========
+=== File: backend/app/services/search_service.py ===
+--- Key sections only ---
+IMPORTS:
+from typing import List, Dict, Any, Optional
+import os
+import httpx
+import json
+from app.agents.web_search_agent import web_search_agent
+from app.services.enhanced_search_service import enhanced_search_service
+
+CLASSES/FUNCTIONS:
+class SearchService:
+
+KEY LOGIC (search|query|rank|score|filter):
+import httpx
+import json
+from app.agents.web_search_agent import web_search_agent
+from app.services.enhanced_search_service import enhanced_search_service
+
+class SearchService:
+    """Service for searching experts online"""
+    
+    def __init__(self):
+        self.google_api_key = os.getenv("GOOGLE_API_KEY", "")
+        self.google_cse_id = os.getenv("GOOGLE_CSE_ID", "")
+        self.use_google_api = bool(self.google_api_key and self.google_cse_id)
+    
+    async def search(
+        self, 
+        query: str,
+        source: str = "all",
+        limit: int = 10,
+        offset: int = 0,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Search for experts online"""
+        
+        if not query:
+            return {"experts": [], "total": 0}
+        
+        experts = []
+        
+        # Use Google Custom Search API if available
+        if self.use_google_api:
+            experts = await self._google_custom_search(query, limit)
+        else:
+            # Use web scraping agent as fallback
+            search_results = web_search_agent.search_google(query, limit)
+            
+            # Convert search results to expert format
+            for idx, result in enumerate(search_results):
+                expert_data = {
+                    "id": f"web_{idx}",
+                    "name": result.get('title', '').split(' - ')[0],
+                    "title": result.get('snippet', '')[:100],
+                    "source": "Google Search",
+--
+                    "skills": self._extract_skills_from_text(result.get('snippet', '')),
+                    "bio": result.get('snippet', ''),
+                    "match_score": 85 - (idx * 5)  # Decreasing relevance
+                }
+                experts.append(expert_data)
+        
+        # If no results from web search, provide mock data for demo
+
+=== File: backend/app/services/vector_search.py ===
+--- Key sections only ---
+IMPORTS:
+import os
+import chromadb
+from chromadb.config import Settings
+
+CLASSES/FUNCTIONS:
+class VectorSearchService:
+
+KEY LOGIC (embed|vector|similarity|distance):
+        except Exception as e:
+            print(f"Warning: Could not initialize ChromaDB: {e}")
+            # Continue without vector search in testing mode
+            if os.getenv("TESTING") == "true":
+                self._initialized = True
+            else:
+                raise
+
+# Global instance
+vector_search_service = VectorSearchService()
+
+=== File: backend/app/api/search.py ===
+--- Key sections only ---
+IMPORTS:
+from fastapi import APIRouter, HTTPException
+from typing import List, Dict, Any, Optional
+from app.models.schemas import SearchQuery, SearchResponse
+from app.services.search_service import SearchService
+from app.models.expert import Expert
+
+CLASSES/FUNCTIONS:
+async def search_experts(query: SearchQuery):
+async def vector_search(query: SearchQuery):
+async def get_search_suggestions(q: str):
+async def get_trending_searches(limit: int = 10):
+
+KEY LOGIC (route|endpoint|get|post):
+"""Search API endpoints"""
+from fastapi import APIRouter, HTTPException
+from typing import List, Dict, Any, Optional
+from app.models.schemas import SearchQuery, SearchResponse
+from app.services.search_service import SearchService
+from app.models.expert import Expert
+
+router = APIRouter(prefix="/api/search", tags=["search"])
+
+# Initialize service
+search_service = SearchService()
+
+@router.post("/", response_model=SearchResponse)
+async def search_experts(query: SearchQuery):
+    """Search for experts based on query and filters"""
+    try:
+        results = await search_service.search(
+            query=query.query,
+--
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/vector", response_model=SearchResponse)
+async def vector_search(query: SearchQuery):
+    """Vector similarity search for experts"""
+    try:
+        results = await search_service.vector_search(
+            query=query.query,
+--
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/suggestions")
+async def get_search_suggestions(q: str):
+    """Get search suggestions based on partial query"""
+    if len(q) < 2:
+        return {"suggestions": []}
+    
+    suggestions = await search_service.get_suggestions(q)
+    return {"suggestions": suggestions}
+
+@router.get("/trending")
+async def get_trending_searches(limit: int = 10):
+    """Get trending search terms"""
+    trending = await search_service.get_trending_searches(limit)
+    return {"trending": trending}
+
+
+========== 2. DATA MODELS STRUCTURE ==========
+=== backend/app/models/expert.py ===
+class ContactMethod(str, Enum):
+class ExpertBase(BaseModel):
+class ExpertCreate(ExpertBase):
+class ExpertUpdate(BaseModel):
+class Expert(ExpertBase):
+    class Config:
+class ExpertSearchResult(BaseModel):
+
+=== backend/app/models/db_models.py ===
+from sqlalchemy import Column, String, Text, JSON, DateTime, Integer, Float, Boolean
+class ExpertDB(Base):
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False)
+    title = Column(String)
+    email = Column(String)
+    location = Column(String)
+    organization = Column(String)
+    bio = Column(Text)
+    skills = Column(JSON)
+    experience = Column(JSON)
+    links = Column(JSON)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    embedding = Column(JSON)  # Store embeddings for similarity search
+    expertise_level = Column(Integer)  # 1-5 scale
+    rating = Column(Float)
+    total_projects = Column(Integer)
+    is_verified = Column(Boolean, default=False)
+
+=== backend/app/models/search.py ===
+class SearchQuery(BaseModel):
+class SearchHistory(BaseModel):
+    class Config:
+class SearchResult(BaseModel):
+
+
+========== 3. DATA SOURCE CONFIGURATION ==========
+=== File: backend/app/services/linkedin_scraper.py ===
+--- Key sections only ---
+IMPORTS:
+import os
+import re
+import logging
+from typing import Optional, Dict
+import requests
+from bs4 import BeautifulSoup
+import time
+
+CLASSES/FUNCTIONS:
+class LinkedInEmailExtractor:
+
+KEY LOGIC (scrape|extract|parse|linkedin):
+# app/services/linkedin_scraper.py
+import os
+import re
+import logging
+from typing import Optional, Dict
+import requests
+--
+        }
+    
+    async def extract_email_from_linkedin(self, name: str, linkedin_url: Optional[str] = None) -> Optional[str]:
+        """
+        Extract email from LinkedIn profile or use known patterns
+        """
+        # First check if we have a known email for this person
+        if name in self.email_patterns:
+            return self.email_patterns[name][0]
+        
+        # If we have a LinkedIn URL, we could attempt to extract
+        # (Note: This would require proper authentication in production)
+        if linkedin_url:
+            # In production, you'd use LinkedIn API or a service like:
+            # - RapidAPI's LinkedIn Data API
+            # - Proxycurl's Person Lookup API
+            # - Hunter.io for email finding
+            pass
+--
+    async def get_contact_info(self, expert_data: Dict) -> Dict:
+        """
+        Enhanced contact info extraction
+        """
+        name = expert_data.get('name', '')
+        linkedin_url = expert_data.get('linkedin_url')
+        
+        # Try to get email
+        email = await self.extract_email_from_linkedin(name, linkedin_url)
+        
+        # Extract other contact methods
+        contact_info = {
+            'email': email,
+            'linkedin': linkedin_url,
+            'twitter': expert_data.get('twitter'),
+            'website': expert_data.get('website'),
+            'preferred_contact': 'email'  # Default preference
+        }
+        
+--
+
+# Singleton instance
+linkedin_extractor = LinkedInEmailExtractor()
+
+=== File: backend/app/agents/web_search_agent.py ===
+--- Key sections only ---
+IMPORTS:
+import requests
+from bs4 import BeautifulSoup
+from typing import List, Dict
+import re
+from app.models.expert import Expert
+import uuid
+from urllib.parse import quote_plus
+import os
+
+CLASSES/FUNCTIONS:
+class WebSearchAgent:
+
+KEY LOGIC (search|query|filter|expert):
+from typing import List, Dict
+import re
+from app.models.expert import Expert
+import uuid
+from urllib.parse import quote_plus
+import os
+
+class WebSearchAgent:
+--
+        }
+    
+    def search_google(self, query: str, num_results: int = 10) -> List[Dict]:
+        """Search Google for expert information"""
+        results = []
+        
+        # For a production system, you'd use Google Custom Search API
+        # This is a simplified example
+        search_url = f"https://www.google.com/search?q={quote_plus(query)}&num={num_results}"
+        
+        try:
+            # Note: In production, use proper APIs to avoid rate limiting
+            # This is just for demonstration
+            print(f"Searching Google for: {query}")
+            
+            # Simulate search results for demonstration
+            # In production, you'd parse actual search results
+            if "geospatial" in query.lower() and "ai" in query.lower():
+                results.append({
+                    'title': 'Dr. Sarah Chen - Geospatial AI Expert',
+                    'url': 'https://example.com/sarah-chen',
+                    'snippet': 'Leading researcher in geospatial AI applications...'
+                })
+            
+            if "machine learning" in query.lower():
+                results.append({
+                    'title': 'Prof. Michael Johnson - ML Researcher',
+                    'url': 'https://example.com/michael-johnson',
+                    'snippet': 'Pioneer in deep learning and neural networks...'
+                })
+                
+        except Exception as e:
+            print(f"Error searching Google: {e}")
+        
+        return results
+    
+    def extract_expert_from_url(self, url: str) -> Dict:
+        """Extract expert information from a webpage"""
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+
+========== 4. SEARCH ALGORITHM ANALYSIS ==========
+=== Search/Ranking Logic ===
+backend/app/services/enhanced_search_service.py:        # Special keywords with boost scores
+backend/app/services/enhanced_search_service.py:        self.keyword_boosts = {
+backend/app/services/enhanced_search_service.py:        for keyword, boost in self.keyword_boosts.items():
+backend/app/services/enhanced_search_service.py:                special_keywords.append((keyword, boost))
+backend/app/services/enhanced_search_service.py:        scored_experts = []
+backend/app/services/enhanced_search_service.py:            score = self._calculate_relevance_score(expert, query_words, special_keywords, query_lower)
+backend/app/services/enhanced_search_service.py:            if score > 0:
+backend/app/services/enhanced_search_service.py:                expert_copy['relevance_score'] = score
+backend/app/services/enhanced_search_service.py:                scored_experts.append(expert_copy)
+backend/app/services/enhanced_search_service.py:        # Sort by relevance score
+backend/app/services/enhanced_search_service.py:        scored_experts.sort(key=lambda x: x['relevance_score'], reverse=True)
+backend/app/services/enhanced_search_service.py:            scored_experts = self._apply_filters(scored_experts, filters)
+backend/app/services/enhanced_search_service.py:        return scored_experts[:20]  # Return top 20 results
+backend/app/services/enhanced_search_service.py:    def _calculate_relevance_score(self, expert: Dict, query_words: List[str], 
+backend/app/services/enhanced_search_service.py:        Calculate relevance score with improved accuracy
+backend/app/services/enhanced_search_service.py:        score = 0.0
+backend/app/services/enhanced_search_service.py:                score += 2.0  # High weight for name match
+backend/app/services/enhanced_search_service.py:                    score += 1.0
+backend/app/services/enhanced_search_service.py:            for keyword, boost in special_keywords:
+backend/app/services/enhanced_search_service.py:                    score += boost
+backend/app/services/enhanced_search_service.py:                score += 0.5
+backend/app/services/enhanced_search_service.py:                    score += 0.7
+backend/app/services/enhanced_search_service.py:                score += 0.8
+backend/app/services/enhanced_search_service.py:                score += 2.0
+backend/app/services/enhanced_search_service.py:        # Normalize score
+backend/app/services/enhanced_search_service.py:        return min(score / 10.0, 1.0)  # Cap at 1.0
+backend/app/services/search_service.py:                    "match_score": 85 - (idx * 5)  # Decreasing relevance
+backend/app/services/search_service.py:                            "match_score": 90 - (idx * 5)
+backend/app/services/search_service.py:        # Sort by relevance and credibility
+backend/app/services/search_service.py:                x.get('relevance_score', 0),
+
+=== Filtering Logic ===
+backend/app/models/schemas.py:    filters: Dict[str, Any] = {}
+backend/app/models/schemas.py:    filters: Dict[str, Any]
+backend/app/models/search.py:    filters: Optional[Dict[str, Any]] = None
+backend/app/models/search.py:    filters: Optional[Dict[str, Any]] = None
+backend/app/models/search.py:    filters: Optional[Dict[str, Any]] = None
+backend/app/api/marketplace.py:    """List marketplace listings with optional filtering"""
+backend/app/api/marketplace.py:    filters = {
+backend/app/api/marketplace.py:        filters["category"] = category
+backend/app/api/marketplace.py:        filters["min_price"] = min_price
+backend/app/api/marketplace.py:        filters["max_price"] = max_price
+backend/app/api/marketplace.py:        filters=filters,
+backend/app/api/marketplace.py:        listing.dict(exclude_unset=True)
+backend/app/api/search.py:    """Search for experts based on query and filters"""
+backend/app/api/search.py:            filters=query.filters
+backend/app/api/search.py:            filters=query.filters
+backend/app/api/search.py:            filters=query.filters
+backend/app/api/search.py:            filters=query.filters
+backend/app/api/experts.py:    """List all experts with optional filtering"""
+backend/app/api/experts.py:    filters = {}
+backend/app/api/experts.py:        filters["skills"] = skills.split(",")
+backend/app/api/experts.py:        filters["location"] = location
+backend/app/api/experts.py:    experts = await expert_service.list_experts(skip=skip, limit=limit, filters=filters)
+backend/app/api/experts.py:    updated_expert = await expert_service.update_expert(expert_id, expert.dict(exclude_unset=True))
+backend/app/services/marketplace_service.py:        query = db.query(MarketplaceListing).filter(MarketplaceListing.is_active == True)
+backend/app/services/marketplace_service.py:            query = query.filter(MarketplaceListing.category == category)
+backend/app/services/marketplace_service.py:        return db.query(MarketplaceListing).filter(
+backend/app/services/linkedin_profile_extractor.py:    Extract real LinkedIn profile information and differentiate between profiles and articles
+backend/app/services/linkedin_profile_extractor.py:    def is_linkedin_article(self, url: str) -> bool:
+backend/app/services/linkedin_profile_extractor.py:        """Check if URL is a LinkedIn article/post instead of a profile"""
+backend/app/services/linkedin_profile_extractor.py:        article_patterns = [
+
+========== 5. KEY CONFIGURATIONS ==========
+=== Requirements (search-related only) ===
+elasticsearch==8.11.0
+langchain==0.0.340
+openai==1.35.0
+sentence-transformers==2.2.2
+
+=== Main app search initialization ===
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from app.api import experts, search, marketplace, matching
+from app.api import test_debug
+from app.utils.database import init_db
+import traceback
+import uuid
+import os
+
+from app.api import email
+
+# Add to your FastAPI app
+
+--
+        }
+    )
+
+# Include routers
+app.include_router(experts.router)
+app.include_router(search.router)
+app.include_router(marketplace.router)
+app.include_router(matching.router)
+app.include_router(test_debug.router)
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize the database on startup"""
+    init_db()
+
+
+========== 6. DATABASE SCHEMA (Latest Migration) ==========
+=== Latest migration file ===
+"""add marketplace and expert dna tables
+    # Create marketplace_offerings table
+    op.create_table(
+        sa.Column('expert_id', sa.String(), nullable=False),
+    # Create bookings table
+    op.create_table(
+        sa.Column('expert_id', sa.String(), nullable=False),
+    # Create expert_dna_profiles table
+    op.create_table(
+        'expert_dna_profiles',
+        sa.Column('expert_id', sa.String(), nullable=False),
+        sa.PrimaryKeyConstraint('expert_id')
+    # Create reviews table
+    op.create_table(
+        sa.Column('expert_id', sa.String(), nullable=False),
+    op.create_index('idx_offerings_expert', 'marketplace_offerings', ['expert_id'])
+    op.create_index('idx_bookings_expert', 'bookings', ['expert_id'])
+    op.create_index('idx_reviews_expert', 'reviews', ['expert_id'])
+    op.drop_index('idx_reviews_expert')
+    op.drop_index('idx_bookings_expert')
+    op.drop_index('idx_offerings_expert')
+    op.drop_table('reviews')
+    op.drop_table('expert_dna_profiles')
+    op.drop_table('bookings')
+    op.drop_table('marketplace_offerings')
+
+========== 7. QUICK DIAGNOSTIC INFO ==========
+=== File sizes (to identify which files have actual logic) ===
+-rw-r--r--  1 James  staff   4.5K  7  5 00:37 backend/app/agents/web_search_agent.py
+-rw-r--r--  1 James  staff   1.1K  7  5 00:37 backend/app/api/enhanced_experts.py
+-rw-r--r--  1 James  staff   2.0K  7  7 23:27 backend/app/api/experts.py
+-rw-r--r--  1 James  staff   3.0K  7  9 12:46 backend/app/api/matching.py
+-rw-r--r--  1 James  staff   2.1K  7  8 01:04 backend/app/api/search.py
+-rw-r--r--  1 James  staff   1.6K  7  7 23:16 backend/app/models/expert.py
+-rw-r--r--  1 James  staff   1.7K  7  7 23:21 backend/app/models/expert_dna.py
+-rw-r--r--  1 James  staff   621B  7  7 23:22 backend/app/models/search.py
+-rw-r--r--  1 James  staff    15K  7 12 00:37 backend/app/services/enhanced_search_service.py
+-rw-r--r--  1 James  staff   7.2K  7  5 03:06 backend/app/services/expert_service.py
+-rw-r--r--  1 James  staff   748B  7  5 03:16 backend/app/services/matching_service.py
+-rw-r--r--  1 James  staff    19K  7 13 02:50 backend/app/services/search_service.py
+-rw-r--r--  1 James  staff   1.8K  7  5 00:37 backend/app/services/vector_search.py
+
+=== Search endpoint routes ===
+backend/app/api/matching.py:@router.post("/smart-match")
+backend/app/api/matching.py:@router.get("/similar-experts/{expert_id}")
+backend/app/api/marketplace.py:@router.get("/experts/{expert_id}/listings", response_model=List[MarketplaceListing])
+backend/app/api/search.py:@router.post("/", response_model=SearchResponse)
+backend/app/api/search.py:@router.post("/vector", response_model=SearchResponse)
+backend/app/api/search.py:@router.get("/suggestions")
+backend/app/api/search.py:@router.get("/trending")
+backend/app/api/enhanced_experts.py:@router.get("/search-enhanced", response_model=List[Expert])
+backend/app/api/enhanced_experts.py:@router.get("/{expert_id}/detailed", response_model=Expert)
+backend/app/api/experts.py:@router.get("/", response_model=List[Expert])
+backend/app/api/experts.py:@router.get("/{expert_id}", response_model=Expert)
+backend/app/api/experts.py:@router.post("/", response_model=Expert)
+backend/app/api/experts.py:@router.put("/{expert_id}", response_model=Expert)
+backend/app/api/experts.py:@router.delete("/{expert_id}")
