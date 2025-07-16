@@ -124,17 +124,10 @@ const WebsitePreview = ({ websites, expert }) => {
   };
 
   const getScreenshotUrl = (url) => {
-    const cleanUrl = url.replace(/^https?:\/\//, '');
-    
-    // Use multiple services as fallbacks
-    const services = [
-      `https://image.thum.io/get/width/600/crop/400/noanimate/${cleanUrl}`,
-      `https://api.screenshotone.com/take?url=${encodeURIComponent(url)}&viewport_width=1200&viewport_height=800&device_scale_factor=1&format=jpg&image_quality=80&block_ads=true&block_cookie_banners=true&block_trackers=true&delay=5`,
-      `https://api.apiflash.com/v1/urltoimage?access_key=YOUR_KEY&url=${encodeURIComponent(url)}&width=600&height=400&format=png&fresh=true`
-    ];
-    
-    return services[0]; // Use first service, or implement fallback logic
-  };
+  // Sign up at screenshotone.com for free API key
+  const apiKey = '9I-eQUDVS4RNTQ';
+  return `https://api.screenshotone.com/take?access_key=${apiKey}&url=${encodeURIComponent(url)}&viewport_width=1200&viewport_height=800&device_scale_factor=1&format=jpg&image_quality=80&block_ads=true&block_cookie_banners=true&full_page=false&delay=3`;
+};
 
   if (allWebsites.length === 0) {
     return (
