@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User, ChevronDown } from 'lucide-react';
 import { ClerkProvider, SignInButton, SignUpButton, UserButton, useUser, useClerk } from "@clerk/clerk-react";
 import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
-import Marketplace from './components/modern/Marketplace';
-import LearningHub from './components/modern/LearningHub';
 import ExpertDetailModal from './components/modern/ExpertDetailModal';
 import EmailComposer from './components/modern/EmailComposer';
 import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
 import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
-import { useAuth } from '@clerk/clerk-react';
 import WaitlistPage from './components/WaitlistPage';
 
 // Get Clerk publishable key from environment
-const clerkPubKey = "pk_test_aG9uZXN0LXB1bWEtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA";
+const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_test_aG9uZXN0LXB1bWEtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
 // Main App wrapped with Clerk
 function App() {
@@ -41,7 +38,6 @@ function AppContent() {
   const { isSignedIn, user, isLoaded } = useUser();
   const { openSignIn } = useClerk();
   
-  const [activeTab, setActiveTab] = useState('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,6 +55,16 @@ function AppContent() {
   // Email composer states
   const [selectedExpertForEmail, setSelectedExpertForEmail] = useState(null);
   const [showEmailComposer, setShowEmailComposer] = useState(false);
+
+  // Ref for scrolling
+  const resultsEndRef = useRef(null);
+
+  // Scroll to bottom when new results are added
+  useEffect(() => {
+    if (results?.experts?.length > 0) {
+      resultsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [results]);
 
   const handleSearch = async (page = 1, append = false) => {
     if (!searchQuery.trim()) return;
@@ -297,12 +303,8 @@ function AppContent() {
     handleEmailClose();
   };
 
-  // Load initial data
-  useEffect(() => {
-    if (searchQuery) {
-      handleSearch(1, false);
-    }
-  }, []);
+  // Check if user has access (not on waitlist)
+  const hasAccess = isSignedIn && user?.publicMetadata?.hasAccess;
 
   // Show loading state while Clerk is loading
   if (!isLoaded) {
@@ -313,38 +315,22 @@ function AppContent() {
     );
   }
 
+  // Show waitlist page if user doesn't have access
+  if (!hasAccess) {
+    return <WaitlistPage />;
+  }
+
+  // Main app for users with access
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-700 bg-gray-900/95 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">
                 ExpertFinder
               </h1>
-              
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex space-x-6">
-                {['discover', 'marketplace', 'learning', 'ai-match'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`text-sm font-medium transition-colors capitalize relative ${
-                      activeTab === tab ? 'text-white' : 'text-gray-400 hover:text-white'
-                    } ${tab === 'ai-match' ? 'flex items-center gap-1' : ''}`}
-                  >
-                    {tab === 'ai-match' && <Sparkles className="w-4 h-4" />}
-                    {tab.replace('-', ' ')}
-                    {activeTab === tab && (
-                      <motion.div
-                        layoutId="activeTab"
-                        className="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-green-500"
-                      />
-                    )}
-                  </button>
-                ))}
-              </nav>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -363,8 +349,8 @@ function AppContent() {
               {/* Auth Section */}
               {isSignedIn ? (
                 <div className="flex items-center gap-4">
-                  <span className="text-gray-300 hidden md:block">
-                    Welcome, {user.firstName || user.username || 'User'}
+                  <span className="text-gray-300 hidden md:block text-sm">
+                    {user.firstName || user.username || 'User'}
                   </span>
                   <UserButton 
                     afterSignOutUrl="/"
@@ -402,410 +388,230 @@ function AppContent() {
             </div>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="md:hidden border-t border-gray-700"
-            >
-              <nav className="px-4 py-4 space-y-2">
-                {['discover', 'marketplace', 'learning', 'ai-match'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-                      activeTab === tab ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    }`}
-                  >
-                    {tab.replace('-', ' ')}
-                  </button>
-                ))}
-                
-                {/* Mobile Auth */}
-                {!isSignedIn && (
-                  <>
-                    <div className="pt-2 mt-2 border-t border-gray-700">
-                      <SignInButton mode="modal">
-                        <button className="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800">
-                          Sign In
-                        </button>
-                      </SignInButton>
-                    </div>
-                  </>
-                )}
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AnimatePresence mode="wait">
-          {activeTab === 'discover' && (
-            <motion.div
-              key="discover"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              {/* Search Section */}
-              <div className="mb-8">
-                <h2 className="text-4xl font-bold mb-2">Find Your Perfect Expert</h2>
-                <p className="text-gray-400 mb-6">AI-powered matching for the best results</p>
-                
-                <div className="relative">
-                  <div className="flex items-center bg-gray-900 rounded-xl border border-gray-700 focus-within:border-green-500 transition-all">
-                    <Search className="w-5 h-5 text-gray-400 ml-4" />
-                    <input
-                      type="text"
-                      placeholder="Search by expertise, skills, or industry..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={handleSearchKeyPress}
-                      className="flex-1 bg-transparent px-4 py-4 text-white placeholder-gray-500 focus:outline-none"
-                    />
-                    <button 
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-                    >
-                      <Filter className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={handleSmartMatch}
-                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-medium px-6 py-3 rounded-r-xl transition-all duration-300 flex items-center space-x-2"
-                      title={!isSignedIn ? "Sign in to use AI matching" : "Use AI to find the perfect expert"}
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span className="hidden sm:inline">Smart Search</span>
-                    </button>
-                  </div>
-
-                  {/* Filters */}
-                  <AnimatePresence>
-                    {showFilters && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="mt-4 overflow-hidden"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
-                          <div>
-                            <label className="text-xs text-gray-400 mb-1 block">Hourly Rate</label>
-                            <select className="input w-full text-sm">
-                              <option>Any</option>
-                              <option>Under $200</option>
-                              <option>$200 - $500</option>
-                              <option>$500+</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-400 mb-1 block">Availability</label>
-                            <select className="input w-full text-sm">
-                              <option>Any</option>
-                              <option>Available Now</option>
-                              <option>This Week</option>
-                              <option>This Month</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-400 mb-1 block">Work Style</label>
-                            <select className="input w-full text-sm">
-                              <option>Any</option>
-                              <option>Analytical</option>
-                              <option>Creative</option>
-                              <option>Collaborative</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-400 mb-1 block">Industry</label>
-                            <select className="input w-full text-sm">
-                              <option>Any</option>
-                              <option>Technology</option>
-                              <option>Healthcare</option>
-                              <option>Finance</option>
-                            </select>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+      {/* Main Content Area - ChatGPT Style */}
+      <main className="flex-1 flex flex-col relative">
+        {/* Results Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Welcome Message when no search */}
+            {!results && !loading && (
+              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+                <div className="text-center">
+                  <Sparkles className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                  <h2 className="text-3xl font-bold mb-2">Find Your Perfect Expert</h2>
+                  <p className="text-gray-400">AI-powered matching for the best results</p>
                 </div>
-
-                {/* Search Mode Indicator */}
-                {searchMode === 'smart' && results && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 flex items-center gap-2 text-sm text-green-400"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>AI-matched results based on your preferences</span>
-                  </motion.div>
-                )}
               </div>
+            )}
 
-              {/* Results */}
-              {loading && currentPage === 1 ? (
-                <div className="text-center py-12">
+            {/* Loading State */}
+            {loading && currentPage === 1 && (
+              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+                <div className="text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
                   <p className="text-gray-400">Finding the best experts for you...</p>
                 </div>
-              ) : results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 ? (
-                <div>
-                  <div className="mb-8">
-                    {/* Results Header */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-white">
-                          Found <span className="text-green-400">{results.total_results}</span> experts
-                        </h3>
-                        <p className="text-sm text-gray-400 mt-1">
-                          Showing {results.experts.length} of {results.total_results} results
+              </div>
+            )}
+
+            {/* Results */}
+            {results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 && (
+              <div>
+                {/* Results Header */}
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">
+                        Found <span className="text-green-400">{results.total_results}</span> experts
+                      </h3>
+                      {searchMode === 'smart' && (
+                        <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          AI-matched results based on your preferences
                         </p>
-                      </div>
-                      
-                      {/* Sort Options */}
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <button className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" />
-                            Relevance
-                          </button>
-                          <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
-                            <Star className="w-4 h-4" />
-                            Rating
-                          </button>
-                          <button className="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
-                            Price
-                          </button>
-                        </div>
-                      </div>
+                      )}
                     </div>
-
-                    {/* Filters Summary */}
-                    {(searchQuery || searchMode === 'smart') && (
-                      <div className="flex items-center gap-3 mb-6">
-                        {searchQuery && (
-                          <div className="px-4 py-2 bg-gray-800 rounded-full text-sm text-gray-300 flex items-center gap-2">
-                            <span>Query: "{searchQuery}"</span>
-                            <button 
-                              onClick={() => {
-                                setSearchQuery('');
-                                setResults(null);
-                                setCurrentPage(1);
-                                setHasMoreResults(false);
-                                setAllExperts([]);
-                              }}
-                              className="text-gray-500 hover:text-white"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        {searchMode === 'smart' && (
-                          <div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-sm text-green-400 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" />
-                            AI-Matched
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Results Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {results.experts.map((expert, idx) => (
-                      <motion.div
-                        key={`expert-${expert.id}-${idx}`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: (idx % 10) * 0.05 }}
-                      >
-                        <EnhancedExpertCard 
-                          expert={expert} 
-                          onClick={() => setSelectedExpert(expert)}
-                          onEmailClick={handleEmailClick}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Load More Button */}
-                  <div className="mt-12 flex justify-center">
-                    {isLoadingMore ? (
-                      <div className="px-8 py-4 bg-gray-800 rounded-lg flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 animate-spin text-green-400" />
-                        <span className="text-gray-300">Loading more experts...</span>
-                      </div>
-                    ) : hasMoreResults ? (
-                      <button
-                        onClick={loadMoreExperts}
-                        className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
-                      >
-                        <span>Load More Experts</span>
-                        <span className="text-sm opacity-75 bg-black/20 px-2 py-1 rounded">
-                          Page {currentPage + 1}
-                        </span>
-                        <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
+                    
+                    {/* Sort Options */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <button className="px-3 py-1.5 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Relevance
                       </button>
-                    ) : results.experts.length >= 10 ? (
-                      <div className="text-center">
-                        <p className="text-gray-500 mb-2">
-                          You've viewed all {results.experts.length} experts
-                        </p>
-                        <button
-                          onClick={() => {
-                            setSearchQuery('');
-                            setResults(null);
-                            setCurrentPage(1);
-                            setHasMoreResults(false);
-                            setAllExperts([]);
-                          }}
-                          className="text-green-400 hover:text-green-300 text-sm"
-                        >
-                          Start a new search
-                        </button>
-                      </div>
-                    ) : null}
+                      <button className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
+                        <Star className="w-4 h-4" />
+                        Rating
+                      </button>
+                      <button className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                        Price
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-16">
+                
+                {/* Results Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {results.experts.map((expert, idx) => (
+                    <motion.div
+                      key={`expert-${expert.id}-${idx}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (idx % 10) * 0.05 }}
+                    >
+                      <EnhancedExpertCard 
+                        expert={expert} 
+                        onClick={() => setSelectedExpert(expert)}
+                        onEmailClick={handleEmailClick}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Load More Button */}
+                <div className="mt-12 flex justify-center">
+                  {isLoadingMore ? (
+                    <div className="px-8 py-4 bg-gray-800 rounded-lg flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-green-400" />
+                      <span className="text-gray-300">Loading more experts...</span>
+                    </div>
+                  ) : hasMoreResults ? (
+                    <button
+                      onClick={loadMoreExperts}
+                      className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+                    >
+                      <span>Load More Experts</span>
+                      <span className="text-sm opacity-75 bg-black/20 px-2 py-1 rounded">
+                        Page {currentPage + 1}
+                      </span>
+                      <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
+                    </button>
+                  ) : results.experts.length >= 10 ? (
+                    <div className="text-center">
+                      <p className="text-gray-500 mb-2">
+                        You've viewed all {results.experts.length} experts
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setResults(null);
+                          setCurrentPage(1);
+                          setHasMoreResults(false);
+                          setAllExperts([]);
+                        }}
+                        className="text-green-400 hover:text-green-300 text-sm"
+                      >
+                        Start a new search
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div ref={resultsEndRef} />
+              </div>
+            )}
+
+            {/* No Results */}
+            {results && results.experts && results.experts.length === 0 && (
+              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+                <div className="text-center">
                   <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
                   <h3 className="text-xl font-medium text-gray-400 mb-2">
-                    {searchQuery ? 'No experts found' : 'Start your expert search'}
+                    No experts found
                   </h3>
                   <p className="text-gray-500">
-                    {searchQuery 
-                      ? 'Try adjusting your search terms or filters'
-                      : 'Enter your query above to find the perfect expert for your needs'
-                    }
+                    Try adjusting your search terms or filters
                   </p>
                 </div>
-              )}
-            </motion.div>
-          )}
+              </div>
+            )}
+          </div>
+        </div>
 
-          {activeTab === 'marketplace' && (
-            <motion.div
-              key="marketplace"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <Marketplace />
-            </motion.div>
-          )}
+        {/* Search Bar at Bottom - ChatGPT Style */}
+        <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-md">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="relative">
+              <div className="flex items-center bg-gray-800 rounded-xl border border-gray-700 focus-within:border-green-500 transition-all">
+                <Search className="w-5 h-5 text-gray-400 ml-4" />
+                <input
+                  type="text"
+                  placeholder="Search for experts by skills, industry, or expertise..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="flex-1 bg-transparent px-4 py-4 text-white placeholder-gray-500 focus:outline-none"
+                />
+                <button 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <Filter className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={handleSmartMatch}
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-medium px-6 py-3 rounded-r-xl transition-all duration-300 flex items-center space-x-2"
+                  title={!isSignedIn ? "Sign in to use AI matching" : "Use AI to find the perfect expert"}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">AI Search</span>
+                </button>
+              </div>
 
-          {activeTab === 'learning' && (
-            <motion.div
-              key="learning"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <LearningHub />
-            </motion.div>
-          )}
-
-          {activeTab === 'ai-match' && (
-            <motion.div
-              key="ai-match"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-3xl mx-auto"
-            >
-              {isSignedIn ? (
-                <>
-                  <h2 className="text-3xl font-bold mb-6 text-center">AI-Powered Expert Matching</h2>
-                  <p className="text-gray-400 mb-8 text-center">
-                    Let our AI find the perfect expert based on your specific needs
-                  </p>
-
-                  <div className="card">
-                    <div className="space-y-6">
+              {/* Filters */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="absolute bottom-full mb-2 left-0 right-0 overflow-hidden"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700 shadow-xl">
                       <div>
-                        <label className="block text-sm font-medium mb-2">What expertise do you need?</label>
-                        <textarea 
-                          className="input w-full"
-                          rows={4}
-                          placeholder="Describe your project, challenge, or learning goals..."
-                        />
+                        <label className="text-xs text-gray-400 mb-1 block">Hourly Rate</label>
+                        <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                          <option>Any</option>
+                          <option>Under $200</option>
+                          <option>$200 - $500</option>
+                          <option>$500+</option>
+                        </select>
                       </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Budget Range</label>
-                          <select className="input w-full">
-                            <option>$100 - $300/hr</option>
-                            <option>$300 - $500/hr</option>
-                            <option>$500+/hr</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Timeline</label>
-                          <select className="input w-full">
-                            <option>ASAP</option>
-                            <option>This Week</option>
-                            <option>This Month</option>
-                            <option>Flexible</option>
-                          </select>
-                        </div>
-                      </div>
-
                       <div>
-                        <label className="block text-sm font-medium mb-2">Preferred Work Style</label>
-                        <div className="grid grid-cols-2 gap-3">
-                          {['Collaborative', 'Independent', 'Structured', 'Flexible'].map((style) => (
-                            <label key={style} className="flex items-center space-x-2 cursor-pointer">
-                              <input type="checkbox" className="rounded border-gray-700" />
-                              <span className="text-sm">{style}</span>
-                            </label>
-                          ))}
-                        </div>
+                        <label className="text-xs text-gray-400 mb-1 block">Availability</label>
+                        <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                          <option>Any</option>
+                          <option>Available Now</option>
+                          <option>This Week</option>
+                          <option>This Month</option>
+                        </select>
                       </div>
-
-                      <button className="w-full btn-primary py-3 flex items-center justify-center space-x-2">
-                        <Sparkles className="w-5 h-5" />
-                        <span>Find My Perfect Match</span>
-                      </button>
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Work Style</label>
+                        <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                          <option>Any</option>
+                          <option>Analytical</option>
+                          <option>Creative</option>
+                          <option>Collaborative</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Industry</label>
+                        <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                          <option>Any</option>
+                          <option>Technology</option>
+                          <option>Healthcare</option>
+                          <option>Finance</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-16">
-                  <Sparkles className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">Sign in to use AI Matching</h3>
-                  <p className="text-gray-400 mb-6">
-                    Get personalized expert recommendations based on your specific needs
-                  </p>
-                  <div className="flex gap-4 justify-center">
-                    <SignInButton mode="modal">
-                      <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors">
-                        Sign In
-                      </button>
-                    </SignInButton>
-                    <SignUpButton mode="modal">
-                      <button className="px-6 py-3 bg-green-500 hover:bg-green-600 text-black rounded-lg font-medium transition-colors">
-                        Create Account
-                      </button>
-                    </SignUpButton>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Expert Detail Modal */}
