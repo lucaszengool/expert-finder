@@ -1,26 +1,17 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.api import experts, search, marketplace, matching
-from app.api import test_debug
 from app.utils.database import init_db
 import traceback
 import uuid
 import os
+
+# Import all routers once
+from app.api import experts, search, marketplace, matching, test_debug, email
 from app.routers import clerk_webhook
 
-from app.api import email
-from app.api import matching
-
-# Add to your FastAPI app
-
-
-# Also add CORS for frontend
-from fastapi.middleware.cors import CORSMiddleware
-
+# Create FastAPI app
 app = FastAPI(title="Expert Finder API", version="2.0.0")
-app.include_router(email.router)
-app.include_router(clerk_webhook.router, tags=["webhooks"])
 
 # Configure CORS
 app.add_middleware(
@@ -33,7 +24,6 @@ app.add_middleware(
         "https://web-production-80694.up.railway.app", 
         "https://expert-finder.up.railway.app",
         "https://expert-finder-production.up.railway.app",
-        "*"  # Allow all origins during development
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -67,12 +57,14 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-# Include routers
+# Include all routers
 app.include_router(experts.router)
 app.include_router(search.router)
 app.include_router(marketplace.router)
-app.include_router(matching.router)
+app.include_router(matching.router)  # This should now work correctly
 app.include_router(test_debug.router)
+app.include_router(email.router)
+app.include_router(clerk_webhook.router, tags=["webhooks"])
 
 @app.on_event("startup")
 async def startup_event():
