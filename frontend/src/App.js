@@ -292,7 +292,26 @@ function AppContent() {
       console.log('Mapped experts:', experts);
       
       setAllExperts(experts);
-      const validExperts = strictExpertValidator.filterExperts(experts);
+      const isValidExpert = (expert) => {
+          const name = expert?.name?.toLowerCase() || '';
+          const title = expert?.title?.toLowerCase() || '';
+          const invalidKeywords = [
+            'linkedin learning', 
+            'coursera', 
+            'framework', 
+            'platform', 
+            'udemy', 
+            'edx',
+            'online training',
+            'skill building',
+            'how to kick off'
+          ];
+          
+          return !invalidKeywords.some(keyword => name.includes(keyword) || title.includes(keyword));
+        };
+
+// Use it to filter
+        const validExperts = experts.filter(expert => isValidExpert(expert));
     
     setResults({
       experts: validExperts,

@@ -17,35 +17,6 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   const [coverImageError, setCoverImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Validate if this is a real expert (not a course/company/article)
-  const isValidExpert = () => {
-    const name = expert.name?.toLowerCase() || '';
-    const title = expert.title?.toLowerCase() || '';
-    const invalidKeywords = [
-      'linkedin learning', 
-      'coursera', 
-      'framework', 
-      'platform', 
-      'udemy', 
-      'edx',
-      'online training',
-      'skill building',
-      'how to kick off' // Article title pattern
-    ];
-    
-    // Check if it's an article title
-    const isArticleTitle = title.includes('how to') || title.includes('kick off') || title.includes('establish');
-    if (isArticleTitle) {
-      // Fix the title if it's from an article
-      expert.title = expert.originalTitle || 'Healthcare AI Expert';
-    }
-    
-    return !invalidKeywords.some(keyword => name.includes(keyword) || title.includes(keyword));
-  };
-
-  if (!isValidExpert()) {
-    return null; // Don't render invalid entries
-  }
 
   // Ensure valid phone and email formats
   const formatPhone = (phone) => {
