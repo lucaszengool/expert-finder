@@ -11,32 +11,23 @@ const WaitlistPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email || !email.includes('@')) return;
-    
-    setIsSubmitting(true);
+  if (!email || !email.includes('@')) return;
+  
+  setIsSubmitting(true);
 
-    try {
-      if (!isSignedIn) {
-        await clerk.redirectToSignUp({
-          redirectUrl: window.location.origin + '/waitlist-success',
-          signUpFallbackRedirectUrl: window.location.origin + '/waitlist-success',
-          emailAddress: email,
-        });
-      } else {
-        await user.update({
-          publicMetadata: {
-            waitlistStatus: 'pending',
-            joinedWaitlistAt: new Date().toISOString()
-          }
-        });
-        setIsSubmitted(true);
-      }
-    } catch (error) {
-      console.error('Error joining waitlist:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  try {
+    // Always redirect to sign up, whether signed in or not
+    await clerk.redirectToSignUp({
+      redirectUrl: window.location.origin,
+      emailAddress: email,
+    });
+  } catch (error) {
+    console.error('Error joining waitlist:', error);
+    alert('There was an error joining the waitlist. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (isSubmitted || (isSignedIn && user?.publicMetadata?.waitlistStatus)) {
     return (
