@@ -7,7 +7,7 @@ import ExpertDetailModal from './components/modern/ExpertDetailModal';
 import EmailComposer from './components/modern/EmailComposer';
 import { searchExpertsEnhanced, smartMatchExperts } from '../services/api';
 import strictExpertValidator from '../utils/expertValidator';
-import './styles/globals.css';
+import '../styles/globals.css';
 import WaitlistPage from './components/WaitlistPage';
 
 // Get Clerk publishable key from environment
