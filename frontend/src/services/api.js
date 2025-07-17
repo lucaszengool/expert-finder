@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://expert-finder.up.railway.app';
 
 // Remove the window.location.origin fallback - it's pointing to the frontend!
 console.log('API_BASE_URL:', API_BASE_URL);
