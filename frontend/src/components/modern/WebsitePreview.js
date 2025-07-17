@@ -66,7 +66,7 @@ const WebsitePreview = ({ expert }) => {
     }
     
     return sites;
-  }, [websites, expert]);
+  }, [expert]);
 
   // Fetch preview data when website changes
   useEffect(() => {
