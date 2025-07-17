@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000' 
-    : window.location.origin);
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+// Remove the window.location.origin fallback - it's pointing to the frontend!
+console.log('API_BASE_URL:', API_BASE_URL);
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -144,16 +145,34 @@ export const searchExperts = async (query, category = 'all', limit = 20) => {
 export const smartMatchExperts = async (query, preferences) => {
   try {
     console.log('Calling smart match API...');
-    // IMPORTANT: Make sure the URL includes /api/
+    console.log('API URL:', `${API_BASE_URL}/api/matching/smart-match`);
+    
+    // Create complete preferences with defaults
+    const completePreferences = {
+      user_id: preferences.user_id || null,
+      preferred_work_styles: preferences.preferred_work_styles || [],
+      preferred_communication_styles: preferences.preferred_communication_styles || [],
+      budget_range: preferences.budget_range || {},
+      preferred_languages: preferences.preferred_languages || [],
+      preferred_time_zones: preferences.preferred_time_zones || [],
+      industry_preferences: preferences.industry_preferences || [],
+      skill_priorities: preferences.skill_priorities || [],
+      project_timeline: preferences.project_timeline || null,
+      team_size_preference: preferences.team_size_preference || null
+    };
+    
     const response = await axios.post(`${API_BASE_URL}/api/matching/smart-match`, {
       query: query,
-      preferences: preferences
+      preferences: completePreferences,
+      limit: 10
     });
     
     console.log('Smart match response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Smart match error:', error);
+    console.error('Error details:', error.response?.data);
+    
     // Return a default response on error to prevent crashes
     return {
       matches: [],
