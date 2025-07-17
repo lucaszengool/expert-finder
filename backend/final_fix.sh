@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd /Users/James/Desktop/expert-finder/backend
 
 echo "🔧 Final comprehensive fix for all issues..."
 echo "=================================================="
