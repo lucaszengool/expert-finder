@@ -18,15 +18,6 @@ const clerkPubKey = "pk_test_aG9uZXN0LXB1bWEtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
 // Main App wrapped with Clerk
 function App() {
-  const { isSignedIn, user } = useAuth();
-  
-  // Check if user has access (you control this in Clerk dashboard)
-  const hasAccess = user?.publicMetadata?.hasAccess || user?.publicMetadata?.waitlistStatus === 'approved';
-  
-  // If user is not signed in or doesn't have access, show waitlist
-  if (!isSignedIn || !hasAccess) {
-    return <WaitlistPage />;
-  }
   if (!clerkPubKey) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">

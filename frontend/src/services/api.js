@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 
-  (window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://expert-finder.up.railway.app');
+  (window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000' 
+    : window.location.origin);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
