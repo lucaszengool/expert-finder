@@ -5,8 +5,8 @@ export const strictExpertValidator = {
   isValidProfileUrl(url) {
     if (!url) return false;
     
-    // Valid LinkedIn personal profile pattern
-    const linkedInProfilePattern = /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-]+\/?$/;
+    // Valid LinkedIn personal profile pattern - updated to handle international URLs
+    const linkedInProfilePattern = /^https?:\/\/([a-zA-Z]{2}\.)?linkedin\.com\/in\/[a-zA-Z0-9\-]+\/?$/;
     
     // Invalid patterns - reject immediately
     const invalidPatterns = [
@@ -40,6 +40,13 @@ export const strictExpertValidator = {
     
     // Check if it's a valid LinkedIn profile
     if (urlLower.includes('linkedin.com')) {
+      // Handle international LinkedIn URLs like sg.linkedin.com, uk.linkedin.com, etc.
+      const linkedInMatch = url.match(/^https?:\/\/([a-zA-Z]{2}\.)?linkedin\.com\/in\/([a-zA-Z0-9\-]+)(\/[a-zA-Z]{2})?\/?$/);
+      if (linkedInMatch) {
+        return true;
+      }
+      
+      // Also check the original pattern for standard URLs
       return linkedInProfilePattern.test(url);
     }
     
@@ -47,123 +54,102 @@ export const strictExpertValidator = {
     return true;
   },
 
-  // Validate if expert data represents a real person
-  isValidExpert(expert) {
-    // Check name
-    const name = expert.name || '';
-    const nameParts = name.split(' ').filter(part => part.length > 0);
+  // Add this method to clean up LinkedIn URLs
+  cleanLinkedInUrl(url) {
+    if (!url) return url;
     
-    // Must have at least first and last name
-    if (nameParts.length < 2) {
-      console.log('Invalid expert: No proper name', name);
-      return false;
-    }
+    // Remove language suffix from LinkedIn URLs (e.g., /en, /fr)
+    const cleanedUrl = url.replace(/\/in\/([a-zA-Z0-9\-]+)\/[a-zA-Z]{2}\/?$/, '/in/$1/');
     
-    // Check for organization names
-    const orgKeywords = [
-      'linkedin learning',
-      'coursera',
-      'udemy',
-      'udacity',
-      'edx',
-      'skillshare',
-      'masterclass',
-      'training',
-      'courses',
-      'platform',
-      'framework',
-      'foundation',
-      'institute',
-      'academy'
-    ];
-    
-    const nameLower = name.toLowerCase();
-    if (orgKeywords.some(keyword => nameLower.includes(keyword))) {
-      console.log('Invalid expert: Organization name detected', name);
-      return false;
-    }
-    
-    // Check title
-    const title = (expert.title || '').toLowerCase();
-    const invalidTitlePatterns = [
-      'how to',
-      'guide to',
-      'learn',
-      'course',
-      'training',
-      'workshop',
-      'seminar',
-      'webinar',
-      'tutorial',
-      'online training',
-      'skill building'
-    ];
-    
-    if (invalidTitlePatterns.some(pattern => title.includes(pattern))) {
-      console.log('Invalid expert: Invalid title pattern', title);
-      return false;
-    }
-    
-    // Check if profile URL is valid
-    const profileUrl = expert.profile_url || expert.linkedin_url || '';
-    if (profileUrl && !this.isValidProfileUrl(profileUrl)) {
-      console.log('Invalid expert: Invalid profile URL', profileUrl);
-      return false;
-    }
-    
-    // Must have professional indicators
-    const professionalIndicators = [
-      'founder', 'ceo', 'cto', 'coo', 'cfo',
-      'engineer', 'developer', 'architect',
-      'scientist', 'researcher', 'professor',
-      'director', 'manager', 'head of',
-      'consultant', 'advisor', 'expert',
-      'specialist', 'analyst', 'designer',
-      'physician', 'doctor', 'phd', 'md'
-    ];
-    
-    const hasProfessionalTitle = professionalIndicators.some(indicator => 
-      title.includes(indicator) || (expert.bio || '').toLowerCase().includes(indicator)
-    );
-    
-    if (!hasProfessionalTitle && !expert.verified_expert) {
-      console.log('Invalid expert: No professional indicators', expert);
-      return false;
-    }
-    
-    return true;
+    return cleanedUrl;
   },
 
-  // Clean and validate expert data
-  cleanExpertData(expert) {
-    // Fix article titles that slipped through
-    if (expert.title && expert.title.toLowerCase().includes('how to')) {
-      // Extract real title from bio or use default
-      const bioMatch = (expert.bio || '').match(/(?:is a|as a|^)(.*?)(?:\.|,|$)/i);
-      expert.title = bioMatch ? bioMatch[1].trim() : 'AI/ML Expert';
-    }
-    
-    // Ensure profile URL is valid
-    if (expert.profile_url && !this.isValidProfileUrl(expert.profile_url)) {
-      // Try to extract valid profile from URL
-      const profileMatch = expert.profile_url.match(/linkedin\.com\/in\/([a-zA-Z0-9\-]+)/);
-      if (profileMatch) {
-        expert.profile_url = `https://www.linkedin.com/in/${profileMatch[1]}/`;
-        expert.linkedin_url = expert.profile_url;
-      } else {
-        // Remove invalid profile URL
-        delete expert.profile_url;
-      }
-    }
-    
-    return expert;
-  },
+  // Update the hasProfessionalIndicators to be less strict
+  hasProfessionalIndicators(expert) {
+  const indicators = [
+    expert.title && expert.title.length > 0 && expert.title !== "View profile",
+    expert.skills && expert.skills.length > 0,
+    expert.bio && expert.bio.length > 20,
+    expert.organization || expert.company,
+    expert.profile_url || expert.linkedin_url,
+    expert.email,
+    expert.publications > 0,
+    expert.citations > 0
+  ];
+  
+  // Require at least 2 indicators instead of 3 for more flexibility
+  return indicators.filter(Boolean).length >= 2;
+},
 
-  // Filter array of experts
+  // Rest of your validator methods remain the same...
   filterExperts(experts) {
-    return experts
-      .filter(expert => this.isValidExpert(expert))
-      .map(expert => this.cleanExpertData(expert));
+    if (!Array.isArray(experts)) return [];
+    
+    return experts.filter(expert => {
+      try {
+        // Basic structure validation
+        if (!expert || typeof expert !== 'object') {
+          console.log('Invalid expert: Not an object');
+          return false;
+        }
+        
+        // Name validation
+        if (!expert.name || typeof expert.name !== 'string' || expert.name.trim().length < 2) {
+          console.log('Invalid expert: Invalid name', expert.name);
+          return false;
+        }
+        
+        // Check if name is actually an article title or company name
+        const nameBlacklist = [
+          'how to', 'guide', 'tips', 'ways to', 'best practices',
+          'framework', 'platform', 'solutions', 'services', 'consulting',
+          'agency', 'studio', 'labs', 'partners', 'associates'
+        ];
+        
+        const lowerName = expert.name.toLowerCase();
+        if (nameBlacklist.some(keyword => lowerName.includes(keyword))) {
+          console.log('Invalid expert: Blacklisted name pattern', expert.name);
+          return false;
+        }
+        
+        // Profile URL validation - use the updated method
+        if (expert.profile_url && !this.isValidProfileUrl(expert.profile_url)) {
+          console.log('Invalid expert: Invalid profile URL', expert.profile_url);
+          return false;
+        }
+        
+        // LinkedIn URL validation
+        if (expert.linkedin_url && !this.isValidProfileUrl(expert.linkedin_url)) {
+          console.log('Invalid expert: Invalid LinkedIn URL', expert.linkedin_url);
+          return false;
+        }
+        
+        // Title validation
+        const invalidTitles = [
+          'course', 'tutorial', 'workshop', 'masterclass', 'bootcamp',
+          'certification', 'training', 'program', 'curriculum'
+        ];
+        
+        if (expert.title) {
+          const lowerTitle = expert.title.toLowerCase();
+          if (invalidTitles.some(keyword => lowerTitle.includes(keyword))) {
+            console.log('Invalid expert: Invalid title pattern', expert.title);
+            return false;
+          }
+        }
+        
+        // Check for professional indicators - use the updated method
+        if (!this.hasProfessionalIndicators(expert)) {
+          console.log('Invalid expert: No professional indicators', expert);
+          return false;
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Error validating expert:', error, expert);
+        return false;
+      }
+    });
   }
 };
 

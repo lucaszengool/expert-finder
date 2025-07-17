@@ -1,8 +1,13 @@
 // Updated WebsitePreview.js with better preview handling
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Globe, Loader2, Linkedin, Github, Twitter, User, Briefcase, Building } from 'lucide-react';
+import { ExternalLink, Globe, Loader2, Linkedin, Github, Twitter, User, Briefcase, Building, MapPin } from 'lucide-react';
 
-const WebsitePreview = ({ websites, expert }) => {
+const WebsitePreview = ({ expert }) => {
+  // Add safety checks
+  if (!expert) {
+    return null;
+  }
+
   const [selectedWebsite, setSelectedWebsite] = useState(0);
   const [previewData, setPreviewData] = useState(null);
   const [loading, setLoading] = useState(false);

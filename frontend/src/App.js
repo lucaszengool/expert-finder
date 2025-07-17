@@ -10,12 +10,23 @@ import EmailComposer from './components/modern/EmailComposer';
 import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
 import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
+import { useAuth } from '@clerk/clerk-react';
+import WaitlistPage from './components/WaitlistPage';
 
 // Get Clerk publishable key from environment
 const clerkPubKey = "pk_test_aG9uZXN0LXB1bWEtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
 // Main App wrapped with Clerk
 function App() {
+  const { isSignedIn, user } = useAuth();
+  
+  // Check if user has access (you control this in Clerk dashboard)
+  const hasAccess = user?.publicMetadata?.hasAccess || user?.publicMetadata?.waitlistStatus === 'approved';
+  
+  // If user is not signed in or doesn't have access, show waitlist
+  if (!isSignedIn || !hasAccess) {
+    return <WaitlistPage />;
+  }
   if (!clerkPubKey) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -256,22 +267,24 @@ function AppContent() {
       console.log('Mapped experts:', experts);
       
       setAllExperts(experts);
-      setResults({
-        experts: experts,
-        total_results: data.total || experts.length,
-        query: searchQuery
-      });
-    } catch (error) {
-      console.error('Smart match failed:', error);
-      setResults({
-        experts: [],
-        total_results: 0,
-        query: searchQuery
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      const validExperts = strictExpertValidator.filterExperts(experts);
+    
+    setResults({
+      experts: validExperts,
+      total_results: validExperts.length,
+      enhanced_query: data.enhanced_query
+    });
+  } catch (error) {
+    console.error('Smart match failed:', error);
+    setResults({
+      experts: [],
+      total_results: 0,
+      error: 'Failed to find matches'
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Email handler functions
   const handleEmailClick = (expert) => {
