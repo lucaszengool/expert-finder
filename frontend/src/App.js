@@ -46,6 +46,14 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchMode, setSearchMode] = useState('standard'); // standard or smart
   
+  // Track AI search attempts for non-authenticated users
+  const [aiSearchAttempts, setAiSearchAttempts] = useState(() => {
+    // Get from localStorage to persist across page refreshes
+    const saved = localStorage.getItem('aiSearchAttempts');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreResults, setHasMoreResults] = useState(false);
@@ -65,6 +73,19 @@ function AppContent() {
       resultsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [results]);
+
+  // Save AI search attempts to localStorage
+  useEffect(() => {
+    localStorage.setItem('aiSearchAttempts', aiSearchAttempts.toString());
+  }, [aiSearchAttempts]);
+
+  // Reset AI search attempts for signed-in users
+  useEffect(() => {
+    if (isSignedIn) {
+      setAiSearchAttempts(0);
+      localStorage.removeItem('aiSearchAttempts');
+    }
+  }, [isSignedIn]);
 
   const handleSearch = async (page = 1, append = false) => {
     if (!searchQuery.trim()) return;
@@ -128,10 +149,17 @@ function AppContent() {
   };
 
   const handleSmartMatch = async () => {
-    // Check if user is signed in for AI features
+    // Check if user is signed in
     if (!isSignedIn) {
-      openSignIn();
-      return;
+      // Check if they've already used their free AI search
+      if (aiSearchAttempts >= 1) {
+        // Show waitlist page for non-authenticated users after 1 attempt
+        setShowWaitlist(true);
+        return;
+      }
+      
+      // Increment attempts for non-authenticated users
+      setAiSearchAttempts(prev => prev + 1);
     }
 
     setLoading(true);
@@ -141,7 +169,7 @@ function AppContent() {
     
     try {
       const preferences = {
-        user_id: user.id, // Use actual Clerk user ID
+        user_id: user?.id || 'guest', // Use guest for non-authenticated users
         preferred_work_styles: ['analytical', 'collaborative'],
         preferred_communication_styles: ['direct', 'technical'],
         budget_range: { min: 100, max: 500 },
@@ -271,6 +299,26 @@ function AppContent() {
       total_results: validExperts.length,
       enhanced_query: data.enhanced_query
     });
+    
+    // Show a notice for non-authenticated users that this is their free trial
+    if (!isSignedIn && aiSearchAttempts === 1) {
+      setTimeout(() => {
+        const notice = document.createElement('div');
+        notice.className = 'fixed bottom-4 right-4 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-6 py-4 rounded-lg max-w-sm z-50';
+        notice.innerHTML = `
+          <p class="text-sm font-medium mb-1">Free AI Search Used</p>
+          <p class="text-xs opacity-90">Sign up to get unlimited AI-powered searches</p>
+        `;
+        document.body.appendChild(notice);
+        
+        setTimeout(() => {
+          notice.style.transition = 'opacity 0.5s';
+          notice.style.opacity = '0';
+          setTimeout(() => notice.remove(), 500);
+        }, 5000);
+      }, 1000);
+    }
+    
   } catch (error) {
     console.error('Smart match failed:', error);
     setResults({
@@ -303,9 +351,6 @@ function AppContent() {
     handleEmailClose();
   };
 
-  // Check if user has access (not on waitlist)
-  const hasAccess = isSignedIn && user?.publicMetadata?.hasAccess;
-
   // Show loading state while Clerk is loading
   if (!isLoaded) {
     return (
@@ -315,12 +360,12 @@ function AppContent() {
     );
   }
 
-  // Show waitlist page if user doesn't have access
-  if (!hasAccess) {
+  // Show waitlist page if triggered
+  if (showWaitlist && !isSignedIn) {
     return <WaitlistPage />;
   }
 
-  // Main app for users with access
+  // Main app - now accessible to everyone
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
@@ -402,6 +447,11 @@ function AppContent() {
                   <Sparkles className="w-16 h-16 text-gray-700 mx-auto mb-4" />
                   <h2 className="text-3xl font-bold mb-2">Find Your Perfect Expert</h2>
                   <p className="text-gray-400">AI-powered matching for the best results</p>
+                  {!isSignedIn && (
+                    <p className="text-sm text-gray-500 mt-4">
+                      Try our AI Search free • No signup required for your first search
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -551,11 +601,16 @@ function AppContent() {
                 </button>
                 <button 
                   onClick={handleSmartMatch}
-                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-medium px-6 py-3 rounded-r-xl transition-all duration-300 flex items-center space-x-2"
-                  title={!isSignedIn ? "Sign in to use AI matching" : "Use AI to find the perfect expert"}
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-medium px-6 py-3 rounded-r-xl transition-all duration-300 flex items-center space-x-2 relative"
+                  title={!isSignedIn && aiSearchAttempts >= 1 ? "Sign up for unlimited AI searches" : "Use AI to find the perfect expert"}
                 >
                   <Sparkles className="w-4 h-4" />
                   <span className="hidden sm:inline">AI Search</span>
+                  {!isSignedIn && aiSearchAttempts === 0 && (
+                    <span className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs px-2 py-0.5 rounded-full font-bold">
+                      FREE
+                    </span>
+                  )}
                 </button>
               </div>
 
