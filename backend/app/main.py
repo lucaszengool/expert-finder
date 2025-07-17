@@ -10,6 +10,7 @@ import os
 from app.routers import clerk_webhook
 
 from app.api import email
+from app.api import matching
 
 # Add to your FastAPI app
 
@@ -19,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Expert Finder API", version="2.0.0")
 app.include_router(email.router)
+app.include_router(matching.router)
 app.include_router(clerk_webhook.router, tags=["webhooks"])
 
 # Configure CORS
