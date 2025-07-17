@@ -183,6 +183,24 @@ function AppContent() {
       
       const data = await smartMatchExperts(searchQuery, preferences);
       console.log('Smart match response:', data);
+
+      const isValidExpert = (expert) => {
+          const name = expert?.name?.toLowerCase() || '';
+          const title = expert?.title?.toLowerCase() || '';
+          const invalidKeywords = [
+            'linkedin learning', 
+            'coursera', 
+            'framework', 
+            'platform', 
+            'udemy', 
+            'edx',
+            'online training',
+            'skill building',
+            'how to kick off'
+          ];
+          
+          return !invalidKeywords.some(keyword => name.includes(keyword) || title.includes(keyword));
+        };
       
       // Map the matches array to experts array with proper structure
       const experts = data.matches ? data.matches.map((m, index) => ({
@@ -287,28 +305,11 @@ function AppContent() {
             helpful: Math.floor(Math.random() * 30) + 5
           }
         ]
-      })).filter(expert => strictExpertValidator.isValidExpert(expert)) : [];
+      })).filter(expert => isValidExpert(expert)) : []; 
       
       console.log('Mapped experts:', experts);
       
       setAllExperts(experts);
-      const isValidExpert = (expert) => {
-          const name = expert?.name?.toLowerCase() || '';
-          const title = expert?.title?.toLowerCase() || '';
-          const invalidKeywords = [
-            'linkedin learning', 
-            'coursera', 
-            'framework', 
-            'platform', 
-            'udemy', 
-            'edx',
-            'online training',
-            'skill building',
-            'how to kick off'
-          ];
-          
-          return !invalidKeywords.some(keyword => name.includes(keyword) || title.includes(keyword));
-        };
 
 // Use it to filter
         const validExperts = experts.filter(expert => isValidExpert(expert));
