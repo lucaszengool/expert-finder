@@ -6,7 +6,7 @@ import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
 import ExpertDetailModal from './components/modern/ExpertDetailModal';
 import EmailComposer from './components/modern/EmailComposer';
 import { searchExpertsEnhanced, smartMatchExperts } from '../services/api';
-import strictExpertValidator from './utils/expertValidator';
+import strictExpertValidator from '../utils/expertValidator';
 import './styles/globals.css';
 import WaitlistPage from './components/WaitlistPage';
 
