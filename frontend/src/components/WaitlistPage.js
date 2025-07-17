@@ -16,14 +16,19 @@ const WaitlistPage = () => {
   setIsSubmitting(true);
 
   try {
-    // Always redirect to sign up, whether signed in or not
-    await clerk.redirectToSignUp({
-      redirectUrl: window.location.origin,
-      emailAddress: email,
-    });
+    if (!isSignedIn) {
+      // Redirect to sign up
+      await clerk.redirectToSignUp({
+        redirectUrl: window.location.origin, // This will redirect back to main app after signup
+        emailAddress: email,
+      });
+    } else {
+      // User is already signed in, just set them as submitted
+      setIsSubmitted(true);
+      // The webhook will handle updating their metadata
+    }
   } catch (error) {
     console.error('Error joining waitlist:', error);
-    alert('There was an error joining the waitlist. Please try again.');
   } finally {
     setIsSubmitting(false);
   }
