@@ -39,13 +39,13 @@ class ExpertDNA(BaseModel):
     updated_at: datetime
 
 class MatchingPreferences(BaseModel):
-    user_id: str
-    preferred_work_styles: List[WorkStyle]
-    preferred_communication_styles: List[CommunicationStyle]
-    budget_range: Dict[str, float]  # {"min": 100, "max": 500}
-    preferred_languages: List[str]
-    preferred_time_zones: List[str]
-    industry_preferences: List[str]
-    skill_priorities: List[str]
-    project_timeline: str  # urgent, short_term, long_term
-    team_size_preference: str  # individual, small_team, large_team
+    user_id: Optional[str] = None
+    preferred_work_styles: Optional[List[str]] = []
+    preferred_communication_styles: Optional[List[str]] = []
+    budget_range: Optional[Dict[str, float]] = {}
+    preferred_languages: Optional[List[str]] = []
+    preferred_time_zones: Optional[List[str]] = []
+    industry_preferences: Optional[List[str]] = []
+    skill_priorities: Optional[List[str]] = []
+    project_timeline: Optional[str] = None
+    team_size_preference: Optional[str] = None
