@@ -4,37 +4,41 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, Check } from 'lucide-react';
 
 const WaitlistPage = () => {
-  const { isSignedIn, user } = useAuth();
+  const { isSignedIn } = useAuth();
   const clerk = useClerk();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async () => {
-  if (!email || !email.includes('@')) return;
-  
-  setIsSubmitting(true);
+    if (!email || !email.includes('@')) return;
+    
+    setIsSubmitting(true);
+    setError('');
 
-  try {
-    if (!isSignedIn) {
-      // Redirect to sign up
-      await clerk.redirectToSignUp({
-        redirectUrl: window.location.origin, // This will redirect back to main app after signup
-        emailAddress: email,
+    try {
+      // Join the Clerk waitlist
+      const response = await clerk.client.waitlist.join({
+        emailAddress: email
       });
-    } else {
-      // User is already signed in, just set them as submitted
-      setIsSubmitted(true);
-      // The webhook will handle updating their metadata
-    }
-  } catch (error) {
-    console.error('Error joining waitlist:', error);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
 
-  if (isSubmitted || (isSignedIn && user?.publicMetadata?.waitlistStatus)) {
+      if (response) {
+        setIsSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Error joining waitlist:', error);
+      if (error.errors && error.errors[0]) {
+        setError(error.errors[0].message);
+      } else {
+        setError('Failed to join waitlist. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
         <motion.div
@@ -45,9 +49,13 @@ const WaitlistPage = () => {
           <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
             <Check className="w-8 h-8 text-emerald-400" />
           </div>
-          <h2 className="text-2xl font-medium text-white mb-2">You're on the list</h2>
-          <p className="text-gray-400 text-sm">
-            We'll notify you when we launch
+          <h2 className="text-2xl font-medium text-white mb-2">You're on the list!</h2>
+          <p className="text-gray-400 text-sm mb-1">
+            We've sent a confirmation email to
+          </p>
+          <p className="text-emerald-400 font-medium">{email}</p>
+          <p className="text-gray-500 text-xs mt-4">
+            We'll notify you when we're ready to launch
           </p>
         </motion.div>
       </div>
@@ -78,7 +86,7 @@ const WaitlistPage = () => {
             Expert Finder
           </h1>
           <p className="text-gray-400">
-            Connect with verified experts. Launching soon.
+            You've used your free AI searches. Join the waitlist for unlimited access.
           </p>
         </div>
 
@@ -95,6 +103,12 @@ const WaitlistPage = () => {
             />
           </div>
 
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || !email || !email.includes('@')}
@@ -109,6 +123,22 @@ const WaitlistPage = () => {
               </>
             )}
           </button>
+        </div>
+
+        {/* Benefits */}
+        <div className="mt-8 space-y-3">
+          <div className="flex items-start gap-3">
+            <Check className="w-4 h-4 text-emerald-400 mt-0.5" />
+            <p className="text-sm text-gray-400">Unlimited AI-powered searches</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <Check className="w-4 h-4 text-emerald-400 mt-0.5" />
+            <p className="text-sm text-gray-400">Direct messaging with experts</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <Check className="w-4 h-4 text-emerald-400 mt-0.5" />
+            <p className="text-sm text-gray-400">Priority support</p>
+          </div>
         </div>
 
         {/* Footer text */}
