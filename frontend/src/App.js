@@ -15,16 +15,6 @@ const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_live_Y2xl
 
 // Main App wrapped with Clerk
 function App() {
-  if (!clerkPubKey) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Configuration Error</h1>
-          <p className="text-gray-400">Please add REACT_APP_CLERK_PUBLISHABLE_KEY to your .env file</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
