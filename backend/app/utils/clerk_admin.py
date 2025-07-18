@@ -13,6 +13,8 @@ async def update_user_metadata(user_id: str, public_metadata: Dict[str, Any], pr
         "Authorization": f"Bearer {CLERK_SECRET_KEY}",
         "Content-Type": "application/json"
     }
+
+    
     
     data = {
         "public_metadata": public_metadata
