@@ -24,7 +24,7 @@ app.add_middleware(
         "https://web-production-80694.up.railway.app", 
         "https://expert-finder.up.railway.app",
         "https://expert-finder-production.up.railway.app",
-        "https://expertfinderofficial.org/"
+        "https://expertfinderofficial.org"
     ],
     allow_credentials=True,
     allow_methods=["*"],
