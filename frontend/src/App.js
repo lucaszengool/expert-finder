@@ -11,7 +11,7 @@ import './styles/globals.css';
 import WaitlistPage from './components/WaitlistPage';
 
 // Get Clerk publishable key from environment
-const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_test_aG9uZXN0LXB1bWEtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA";
+const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_live_Y2xlcmsuZXhwZXJ0ZmluZGVyb2ZmaWNpYWwub3JnJA";
 
 // Main App wrapped with Clerk
 function App() {
