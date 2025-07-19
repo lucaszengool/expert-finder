@@ -28,7 +28,7 @@ const WaitlistPage = () => {
             Expert Finder
           </h1>
           <p className="text-gray-400">
-            You've used your 3 free AI searches. Join the waitlist for unlimited access.
+            You've used your free AI searches. Join the waitlist for unlimited access.
           </p>
         </div>
 
