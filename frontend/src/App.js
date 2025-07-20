@@ -27,7 +27,7 @@ function LandingPage() {
     {
       icon: Globe,
       title: "Global Expert Network",
-      description: "Access to over 10,000+ verified experts across 150+ countries",
+      description: "Access to over 1M+ verified experts across 150+ countries",
       color: "from-blue-500 to-cyan-500"
     },
     {
@@ -45,7 +45,7 @@ function LandingPage() {
   ];
 
   const stats = [
-    { value: "10K+", label: "Expert Network" },
+    { value: "1M+", label: "Expert Network" },
     { value: "98%", label: "Satisfaction Rate" },
     { value: "24/7", label: "Availability" },
     { value: "150+", label: "Countries" }
@@ -221,7 +221,7 @@ function LandingPage() {
               {
                 step: "2",
                 title: "AI Matches You",
-                description: "Our AI analyzes thousands of experts to find your perfect matches",
+                description: "Our AI analyzes search experts worldwide and find your perfect matches",
                 icon: Brain
               },
               {
