@@ -8,6 +8,11 @@ import EmailComposer from './components/modern/EmailComposer';
 import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
 import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
+import ReactGA from "react-ga4";
+
+// Initialize GA4 with your Measurement ID
+const MEASUREMENT_ID = "G-YW4X5SG5QE";
+ReactGA.initialize(MEASUREMENT_ID);
 
 // Get Clerk publishable key from environment
 const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_live_Y2xlcmsuZXhwZXJ0ZmluZGVyb2ZmaWNpYWwub3JnJA";
@@ -360,6 +365,18 @@ function AppContent() {
 
   // Ref for scrolling
   const resultsEndRef = useRef(null);
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+  }, []);
+
+  // Helper function to track events
+  const trackEvent = (category, action, label) => {
+    ReactGA.event({
+      category: category,
+      action: action,
+      label: label,
+    });
+  };
 
   // Scroll to bottom when new results are added
   useEffect(() => {
@@ -370,6 +387,8 @@ function AppContent() {
 
   const handleSearch = async (page = 1, append = false) => {
     if (!searchQuery.trim()) return;
+
+    trackEvent("Search", "Standard Search", searchQuery);
     
     // Set appropriate loading state
     if (page === 1) {
@@ -430,6 +449,7 @@ function AppContent() {
   };
 
   const handleSmartMatch = async () => {
+    trackEvent("Search", "AI Search", searchQuery);
     setLoading(true);
     setSearchMode('smart');
     setCurrentPage(1);
@@ -757,8 +777,14 @@ function AppContent() {
                     >
                       <EnhancedExpertCard 
                         expert={expert} 
-                        onClick={() => setSelectedExpert(expert)}
-                        onEmailClick={handleEmailClick}
+                        onClick={() => {
+                          trackEvent("Expert", "View Profile", expert.name);
+                          setSelectedExpert(expert);
+                        }}
+                        onEmailClick={(expert) => {
+                          trackEvent("Expert", "Email Click", expert.name);
+                          handleEmailClick(expert);
+                        }}
                       />
                     </motion.div>
                   ))}
