@@ -76,15 +76,6 @@ function ArcadeDemo({ onClose }) {
 function LandingPage() {
   const { openSignUp } = useClerk();
   const [hoveredFeature, setHoveredFeature] = useState(null);
-  const [showDemo, setShowDemo] = useState(false);
-
-  // Show demo automatically after 2 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowDemo(true);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const features = [
     {
@@ -201,7 +192,6 @@ function LandingPage() {
                 </button>
               </SignUpButton>
               <button 
-                onClick={() => setShowDemo(true)}
                 className="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-all duration-300 border border-gray-700"
               >
                 Watch Demo
@@ -331,6 +321,39 @@ function LandingPage() {
         </div>
       </section>
 
+
+      {/* Demo Section */}
+<section className="relative z-10 py-20 px-4 bg-gray-900/50">
+  <div className="max-w-7xl mx-auto">
+    <div className="text-center mb-12">
+      <h2 className="text-4xl font-bold mb-4">Try It Yourself</h2>
+      <p className="text-xl text-gray-400">See how easy it is to find and contact experts</p>
+    </div>
+    
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className="bg-gray-800 rounded-xl border border-gray-700 p-4 shadow-2xl"
+    >
+      <div style={{ position: 'relative', paddingBottom: 'calc(53.57142857142857% + 41px)', height: 0, width: '100%' }}>
+        <iframe
+          src="https://demo.arcade.software/hvL2WNYn1i1vBj7WTCcK?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
+          title="Find and Contact an AI-Matched Expert for Your Project"
+          frameBorder="0"
+          loading="lazy"
+          allowFullScreen
+          allow="clipboard-write"
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', colorScheme: 'light', borderRadius: '8px' }}
+        />
+      </div>
+    </motion.div>
+  </div>
+</section>
+
+
+
+
       {/* Expert Categories */}
       <section className="relative z-10 py-20 px-4">
         <div className="max-w-7xl mx-auto">
@@ -394,13 +417,6 @@ function LandingPage() {
           </motion.div>
         </div>
       </section>
-
-      {/* Arcade Demo Modal */}
-      <AnimatePresence>
-        {showDemo && (
-          <ArcadeDemo onClose={() => setShowDemo(false)} />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
