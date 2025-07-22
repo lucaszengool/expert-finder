@@ -1,17 +1,65 @@
 import axios from 'axios';
 
+import axios from 'axios';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://expert-finder.up.railway.app';
 
-// Remove the window.location.origin fallback - it's pointing to the frontend!
 console.log('API_BASE_URL:', API_BASE_URL);
 
-
+// Create axios instance with interceptors
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 second timeout
 });
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log(`Making ${config.method.toUpperCase()} request to:`, config.url);
+    console.log('Request headers:', config.headers);
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response received:', response.status);
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      // Server responded with error
+      console.error('Response error:', error.response.status, error.response.data);
+    } else if (error.request) {
+      // Request made but no response (CORS, network, etc)
+      console.error('Network/CORS error:', error.message);
+      console.error('Request details:', error.config);
+    } else {
+      console.error('Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Test endpoint to check if API is accessible
+export const testAPIConnection = async () => {
+  try {
+    const response = await api.get('/health');
+    console.log('API health check successful:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('API health check failed:', error);
+    return null;
+  }
+};
 
 export const modifyEmailWithAI = async (originalEmail, prompt, context) => {
   try {

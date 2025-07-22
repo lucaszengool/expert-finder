@@ -1,3 +1,4 @@
+# backend/app/main.py
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -6,14 +7,23 @@ import traceback
 import uuid
 import os
 
-# Import all routers once
+# Import all routers
 from app.api import experts, search, marketplace, matching, test_debug, email
+
+# Try to import outreach router if it exists
+try:
+    from app.api import outreach
+    OUTREACH_ENABLED = True
+except ImportError:
+    print("Warning: Outreach module not found. Continuing without it.")
+    OUTREACH_ENABLED = False
+
 from app.routers import clerk_webhook
 
 # Create FastAPI app
 app = FastAPI(title="Expert Finder API", version="2.0.0")
 
-# Configure CORS
+# Configure CORS - Make sure this happens BEFORE adding routers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -24,14 +34,18 @@ app.add_middleware(
         "https://web-production-80694.up.railway.app", 
         "https://expert-finder.up.railway.app",
         "https://expert-finder-production.up.railway.app",
-        "https://expertfinderofficial.org"
+        "https://expertfinderofficial.org",
+        "https://www.expertfinderofficial.org",
+        "*"  # Temporarily allow all origins for debugging
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600
 )
 
-# Add exception handler for better error logging
+# Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler to log all errors"""
@@ -62,20 +76,30 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(experts.router)
 app.include_router(search.router)
 app.include_router(marketplace.router)
-app.include_router(matching.router)  # This should now work correctly
+app.include_router(matching.router)
 app.include_router(test_debug.router)
 app.include_router(email.router)
 app.include_router(clerk_webhook.router, tags=["webhooks"])
+
+# Only include outreach router if it exists
+if OUTREACH_ENABLED:
+    app.include_router(outreach.router)
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize the database on startup"""
     init_db()
+    print("Database initialized successfully")
+    print(f"Outreach module enabled: {OUTREACH_ENABLED}")
 
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "Expert Finder API v2.0.0", "status": "online"}
+    return {
+        "message": "Expert Finder API v2.0.0", 
+        "status": "online",
+        "outreach_enabled": OUTREACH_ENABLED
+    }
 
 @app.get("/health")
 async def health_check():
@@ -83,5 +107,6 @@ async def health_check():
     return {
         "status": "healthy",
         "version": "2.0.0",
-        "service": "expert-finder-api"
+        "service": "expert-finder-api",
+        "cors_origins": app.middleware[0].options.get('allow_origins', []) if app.middleware else []
     }

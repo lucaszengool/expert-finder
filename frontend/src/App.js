@@ -353,7 +353,7 @@ function CanvasLandingPage() {
           {/* AI Agents */}
           <div className="mt-8 grid md:grid-cols-2 gap-8">
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
@@ -494,10 +494,10 @@ function CanvasLandingPage() {
               <div key={index} className="border-b border-gray-200 pb-4">
                 <button
                   onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-                  className="w-full flex items-center justify-between py-4 text-left hover:text-gray-600 transition-colors"
+                  className="w-full flex items-center justify-between py-4 text-left hover:text-gray-700 transition-colors"
                 >
-                  <span className="text-lg font-medium">{faq.question}</span>
-                  <ChevronDown className={`w-5 h-5 transition-transform ${
+                  <span className="text-lg font-medium text-gray-900">{faq.question}</span>
+                  <ChevronDown className={`w-5 h-5 text-gray-600 transition-transform ${
                     openFAQ === index ? 'rotate-180' : ''
                   }`} />
                 </button>
