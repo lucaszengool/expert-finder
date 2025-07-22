@@ -158,12 +158,11 @@ function CanvasLandingPage() {
             
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#" className="text-gray-700 hover:text-gray-900 text-sm">Home</a>
-              <a href="#" className="text-gray-700 hover:text-gray-900 text-sm">Careers</a>
               <button
-                onClick={openSignIn}
+                onClick={openSignUp}
                 className="px-5 py-2 bg-black text-white text-sm rounded-full hover:bg-gray-800 transition-colors"
               >
-                Talk to sales
+                Sign Up
               </button>
             </nav>
           </div>
@@ -353,47 +352,60 @@ function CanvasLandingPage() {
 
           {/* AI Agents */}
           <div className="mt-8 grid md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-2xl p-8">
-              <h3 className="text-xl font-semibold mb-4">AI Negotiation Agent</h3>
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                AI Negotiation Agent
+              </h3>
               <p className="text-gray-600 mb-6">
                 Handles responses, negotiates terms, and closes deals while you sleep
               </p>
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">C</div>
-                    <div className="flex-1">
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs font-medium">C</div>
+                    <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
                       <p className="text-sm">What's your budget for this project?</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">AI</div>
-                    <div className="flex-1">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium shadow">AI</div>
+                    <div className="flex-1 bg-purple-50 rounded-lg p-3 border border-purple-200">
                       <p className="text-sm">We offer flexible packages starting at $5k/month. 
                       Based on your needs, I'd recommend our Growth plan. Should we schedule a call to discuss details?</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <button className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all mt-4">
+              <button 
+                onClick={() => console.log('Learn more about AI Negotiation')}
+                className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all mt-4 text-purple-600 hover:text-purple-700"
+              >
                 Learn more <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl p-8">
+            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Meeting Scheduler AI</h3>
-                <span className="text-sm text-green-600 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Live • Booking meetings
+                <h3 className="text-lg font-semibold flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  Meeting Scheduler AI
+                </h3>
+                <span className="text-sm text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Live
                 </span>
               </div>
               
               {/* Calendar visualization */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="grid grid-cols-5 gap-2 text-center mb-3">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-                    <div key={day} className="text-xs text-gray-500">{day}</div>
+                    <div key={day} className="text-xs text-gray-500 font-medium">{day}</div>
                   ))}
                 </div>
                 <div className="grid grid-cols-5 gap-2">
@@ -402,8 +414,8 @@ function CanvasLandingPage() {
                       key={i} 
                       className={`h-8 rounded ${
                         [3, 7, 9, 12].includes(i) 
-                          ? 'bg-blue-100 border border-blue-300' 
-                          : 'bg-gray-50'
+                          ? 'bg-gradient-to-br from-blue-400 to-blue-500 shadow-sm' 
+                          : 'bg-gray-100'
                       }`}
                     />
                   ))}
@@ -411,8 +423,8 @@ function CanvasLandingPage() {
               </div>
               
               {/* Stats */}
-              <div className="mt-4 flex items-center justify-between text-sm">
-                <span>This week:</span>
+              <div className="mt-4 flex items-center justify-between text-sm bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <span className="text-gray-700">This week:</span>
                 <span className="font-medium text-blue-600">4 meetings booked</span>
               </div>
             </div>
@@ -443,16 +455,20 @@ function CanvasLandingPage() {
               { icon: Send, label: "Engage", color: "from-orange-400 to-red-400", desc: "AI sends personalized outreach" },
               { icon: CheckCircle, label: "Booked", color: "from-yellow-400 to-orange-400", desc: "Meetings scheduled automatically" }
             ].map((item, index) => (
-              <div key={index} className="text-center">
-                <div className={`h-48 rounded-2xl bg-gradient-to-br ${item.color} opacity-20 mb-4 relative overflow-hidden`}>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <item.icon className="w-12 h-12 text-gray-700 opacity-50" />
+              <div key={index} className="text-center group">
+                <div className={`h-48 rounded-2xl bg-gradient-to-br ${item.color} p-1 mb-4 relative overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105`}>
+                  <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center">
+                    <item.icon className="w-16 h-16 text-gray-700" />
                   </div>
                 </div>
-                <h3 className="font-semibold">{item.label}</h3>
+                <h3 className="font-semibold text-lg">{item.label}</h3>
                 <p className="text-xs text-gray-600 mt-1 px-2">{item.desc}</p>
-                <button className="text-sm text-gray-600 mt-2 flex items-center gap-1 mx-auto hover:gap-2 transition-all">
-                  Learn more <ArrowRight className="w-3 h-3" />
+                <button 
+                  onClick={() => console.log(`Learn more about ${item.label}`)}
+                  className="text-sm text-gray-700 mt-2 flex items-center gap-1 mx-auto hover:gap-2 transition-all hover:text-black group"
+                >
+                  Learn more 
+                  <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
                 </button>
               </div>
             ))}
