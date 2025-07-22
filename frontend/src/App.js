@@ -353,13 +353,13 @@ function CanvasLandingPage() {
           {/* AI Agents */}
           <div className="mt-8 grid md:grid-cols-2 gap-8">
             <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-3">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
-                AI Negotiation Agent
+                <span className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg">AI Negotiation Agent</span>
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-700 mb-6 bg-purple-50 p-3 rounded-lg">
                 Handles responses, negotiates terms, and closes deals while you sleep
               </p>
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -393,7 +393,7 @@ function CanvasLandingPage() {
                   <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow">
                     <Calendar className="w-5 h-5 text-white" />
                   </div>
-                  Meeting Scheduler AI
+                  <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg">Meeting Scheduler AI</span>
                 </h3>
                 <span className="text-sm text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -491,13 +491,13 @@ function CanvasLandingPage() {
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="border-b border-gray-200 pb-4">
+              <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-                  className="w-full flex items-center justify-between py-4 text-left hover:text-gray-700 transition-colors"
+                  className="w-full flex items-center justify-between p-6 text-left bg-white hover:bg-gray-50 transition-colors"
                 >
                   <span className="text-lg font-medium text-gray-900">{faq.question}</span>
-                  <ChevronDown className={`w-5 h-5 text-gray-600 transition-transform ${
+                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${
                     openFAQ === index ? 'rotate-180' : ''
                   }`} />
                 </button>
@@ -510,7 +510,9 @@ function CanvasLandingPage() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <p className="text-gray-600 pb-4">{faq.answer}</p>
+                      <div className="px-6 pb-6 pt-0 bg-gray-50">
+                        <p className="text-gray-700">{faq.answer}</p>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
