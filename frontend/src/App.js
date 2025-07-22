@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User, ChevronDown, Brain, Zap, Shield, Globe, ArrowRight, CheckCircle, BarChart3, Clock, MessageSquare, Award } from 'lucide-react';
+import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User, ChevronDown, Brain, Zap, Shield, Globe, ArrowRight, CheckCircle, BarChart3, Clock, MessageSquare, Award, Target, Send, Bot, FileText, Calendar } from 'lucide-react';
 import { ClerkProvider, SignInButton, SignUpButton, UserButton, useUser, useClerk } from "@clerk/clerk-react";
 import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
 import ExpertDetailModal from './components/modern/ExpertDetailModal';
@@ -17,404 +17,443 @@ ReactGA.initialize(MEASUREMENT_ID);
 // Get Clerk publishable key from environment
 const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_live_Y2xlcmsuZXhwZXJ0ZmluZGVyb2ZmaWNpYWwub3JnJA";
 
-// Arcade Demo Component
-function ArcadeDemo({ onClose }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="relative w-full max-w-5xl bg-gray-900 rounded-xl border border-gray-700 shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-500/10 to-green-600/10 border-b border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-green-400" />
-                See How ExpertFinder Works
-              </h3>
-              <p className="text-sm text-gray-400 mt-1">Interactive demo - Try it yourself!</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+// Canvas-style Landing Page Component
+function CanvasLandingPage() {
+  const { openSignUp, openSignIn } = useClerk();
+  const [activeStep, setActiveStep] = useState(0);
 
-        {/* Arcade Embed */}
-        <div className="p-4 bg-gray-900">
-          <div style={{ position: 'relative', paddingBottom: 'calc(53.57142857142857% + 41px)', height: 0, width: '100%' }}>
-            <iframe
-              src="https://demo.arcade.software/hvL2WNYn1i1vBj7WTCcK?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
-              title="Find and Connect with AI-Matched Professionals"
-              frameBorder="0"
-              loading="lazy"
-              allowFullScreen
-              allow="clipboard-write"
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', colorScheme: 'light', borderRadius: '8px' }}
-            />
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// Landing Page Component
-function LandingPage() {
-  const { openSignUp } = useClerk();
-  const [hoveredFeature, setHoveredFeature] = useState(null);
-
-  const features = [
+  const steps = [
     {
-      icon: Brain,
-      title: "AI-Powered Matching",
-      description: "Our advanced AI analyzes your outreach goals to find the perfect connections instantly",
-      color: "from-purple-500 to-pink-500"
+      number: "1",
+      title: "Discover",
+      description: "AI agents scan millions of professionals, businesses, and potential partners worldwide.",
+      icon: Search,
+      active: activeStep === 0
     },
     {
-      icon: Globe,
-      title: "Global Professional Network",
-      description: "Access to over 1M+ verified professionals and businesses across 150+ countries",
-      color: "from-blue-500 to-cyan-500"
+      number: "2", 
+      title: "Qualify",
+      description: "Smart AI filters and qualifies matches based on your specific criteria and goals.",
+      icon: Target,
+      active: activeStep === 1
     },
     {
-      icon: Shield,
-      title: "Verified Connections",
-      description: "All profiles are thoroughly vetted with verified credentials, reviews, and active status",
-      color: "from-green-500 to-emerald-500"
+      number: "3",
+      title: "Engage",
+      description: "Automated personalized outreach and negotiation to build valuable connections.",
+      icon: Send,
+      active: activeStep === 2
     },
     {
-      icon: Zap,
-      title: "Instant Outreach",
-      description: "Connect with experts, clients, or partners in real-time through automated personalized outreach",
-      color: "from-yellow-500 to-orange-500"
+      number: "4",
+      title: "Booked",
+      description: "You get meetings with ideal matches while AI handles all the heavy lifting.",
+      icon: Calendar,
+      active: activeStep === 3
     }
   ];
 
-  const stats = [
-    { value: "1M+", label: "Professional Network" },
-    { value: "98%", label: "Success Rate" },
-    { value: "24/7", label: "AI Availability" },
-    { value: "150+", label: "Countries" }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % 4);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const faqs = [
+    {
+      question: "What does ExpertFinder actually do?",
+      answer: "ExpertFinder uses AI to find and connect you with experts, potential clients, or business partners. Our AI agents search, qualify, and engage with prospects automatically, booking meetings directly to your calendar."
+    },
+    {
+      question: "Do I need to train the AI or upload data?",
+      answer: "No training needed! Simply describe who you're looking for and our AI instantly starts finding matches. You can optionally upload email examples to personalize outreach style."
+    },
+    {
+      question: "Who reaches out to the leads — AI or humans?",
+      answer: "Our AI handles initial outreach and qualification, but all communications are personalized and human-like. You can review and customize any message before it's sent."
+    },
+    {
+      question: "How fast can I start seeing meetings?",
+      answer: "Most users see their first qualified meetings within 48-72 hours of starting a campaign. The AI works 24/7 to find and engage with your ideal connections."
+    },
+    {
+      question: "Can ExpertFinder integrate with my CRM?",
+      answer: "Yes! We integrate with all major CRMs including Salesforce, HubSpot, and Pipedrive. Your leads and conversations sync automatically."
+    },
+    {
+      question: "Is this better than hiring SDRs?",
+      answer: "ExpertFinder works 24/7, never takes sick days, and scales instantly. It's 10x more cost-effective than SDRs while maintaining consistent quality and personalization."
+    }
   ];
 
-  return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="absolute inset-0">
-          {[...Array(50)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-green-400 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                opacity: [0, 1, 0],
-                scale: [0, 1.5, 0],
-              }}
-              transition={{
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                delay: Math.random() * 5,
-              }}
-            />
-          ))}
-        </div>
-      </div>
+  const [openFAQ, setOpenFAQ] = useState(null);
 
+  return (
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="relative z-10 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="border-b border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">
-              ExpertFinder
-            </h1>
-            <div className="flex gap-3">
-              <SignInButton mode="modal">
-                <button className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
-                  Sign In
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-black rounded-lg font-medium transition-colors">
-                  Get Started
-                </button>
-              </SignUpButton>
+            <div className="flex items-center space-x-2">
+              <Bot className="h-6 w-6" />
+              <h1 className="text-xl font-medium">ExpertFinder</h1>
             </div>
+            
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#" className="text-gray-700 hover:text-gray-900 text-sm">Home</a>
+              <a href="#" className="text-gray-700 hover:text-gray-900 text-sm">Careers</a>
+              <button
+                onClick={openSignIn}
+                className="px-5 py-2 bg-black text-white text-sm rounded-full hover:bg-gray-800 transition-colors"
+              >
+                Talk to sales
+              </button>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-32 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 mb-6">
-              <Sparkles className="w-4 h-4 text-green-400" />
-              <span className="text-sm text-green-400">AI-Powered Professional Outreach</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-green-100 to-green-400 text-transparent bg-clip-text">
-              Find Anyone You Need
-              <br />
-              <span className="text-3xl md:text-5xl">Experts, Clients, Partners - Instantly</span>
-            </h1>
-            
-            <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
-              Connect with the right people worldwide. Our AI matches you with verified experts, potential clients, or business partners based on your specific goals and criteria.
-            </p>
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-medium px-3 py-1 rounded-full mb-6">
+            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+            Backed by Y Combinator
+          </div>
+          
+          <h1 className="text-5xl md:text-6xl font-medium text-gray-900 mb-4">
+            AI Operating System
+            <br />
+            <span className="text-4xl md:text-5xl">for <span className="text-blue-500">B2B Sales</span></span>
+          </h1>
+          
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            AI Research Agents Find & Enrich Warm Leads. Actual humans
+            book you demos, perfecting every cold call and email.
+          </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <SignUpButton mode="modal">
-                <button className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
-                  <span>Start Free Trial</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </SignUpButton>
-              <button 
-                className="px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-all duration-300 border border-gray-700"
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={openSignUp}
+              className="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors text-base font-medium"
+            >
+              Get Started
+            </button>
+            <button className="px-8 py-3 bg-white text-black border border-gray-300 rounded-full hover:bg-gray-50 transition-colors text-base font-medium">
+              Book a Demo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Process Steps */}
+      <section className="py-16 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            {steps.map((step, index) => (
+              <motion.div
+                key={index}
+                className={`text-center transition-all duration-500 ${
+                  step.active ? 'scale-105' : 'scale-100 opacity-70'
+                }`}
               >
-                Watch Demo
+                <div className={`inline-flex flex-col items-center ${
+                  index < steps.length - 1 ? 'relative' : ''
+                }`}>
+                  {/* Connection line */}
+                  {index < steps.length - 1 && (
+                    <div className="hidden md:block absolute left-1/2 top-8 w-full h-0.5 bg-gray-300">
+                      <motion.div
+                        className="h-full bg-green-500"
+                        initial={{ width: "0%" }}
+                        animate={{ width: activeStep > index ? "100%" : "0%" }}
+                        transition={{ duration: 1 }}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Step circle */}
+                  <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all ${
+                    step.active ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    <step.icon className="w-8 h-8" />
+                  </div>
+                  
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">Step {step.number}</h3>
+                  <h4 className="text-lg font-semibold mb-2">{step.title}</h4>
+                  <p className="text-sm text-gray-600 max-w-xs">{step.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-medium text-gray-900 mb-4">
+              Stop searching for leads.
+              <br />
+              Start closing them.
+            </h2>
+            <p className="text-xl text-gray-600">
+              AI Sales Research Agents that crawl every corner of the
+              <br />
+              web to find, qualify, and enrich local business data at scale.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Local Business Search */}
+            <div className="bg-gray-50 rounded-2xl p-8">
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Search className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Local Businesses Search</h3>
+                </div>
+                <p className="text-gray-600">
+                  Finds qualified businesses that match your live buying signals.
+                </p>
+              </div>
+              
+              {/* Mock search results */}
+              <div className="space-y-3">
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Bright Smile Digital</h4>
+                        <p className="text-sm text-gray-500">Growing practice • 12 employees</p>
+                      </div>
+                    </div>
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200 opacity-60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-32"></div>
+                      <div className="h-3 bg-gray-100 rounded w-24"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enrich Decision Makers */}
+            <div className="bg-gray-50 rounded-2xl p-8">
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold">Enrich Decision Makers</h3>
+                </div>
+                <p className="text-gray-600">
+                  Leverages 15+ public and proprietary data sources to enrich decision makers.
+                </p>
+              </div>
+              
+              {/* Mock enriched contacts */}
+              <div className="space-y-2">
+                {[
+                  { name: "Dr. Sarah Johnson", title: "Owner", initials: "SJ" },
+                  { name: "Dr. Alex Lee", title: "Partner", initials: "AL" },
+                  { name: "Dr. Emily Chen", title: "Pediatric Dentist", initials: "EC" }
+                ].map((person, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
+                      {person.initials}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{person.name}</h4>
+                      <p className="text-xs text-gray-500">{person.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* AI Qualification Agent */}
+          <div className="mt-8 grid md:grid-cols-2 gap-8">
+            <div className="bg-gray-50 rounded-2xl p-8">
+              <h3 className="text-xl font-semibold mb-4">AI Qualification Agent</h3>
+              <p className="text-gray-600 mb-6">
+                24/7 autonomous agents that qualify and prioritize your ICP
+              </p>
+              <button className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all">
+                Learn more <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + index * 0.1 }}
-                  className="text-center"
-                >
-                  <div className="text-3xl md:text-4xl font-bold text-green-400 mb-1">{stat.value}</div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="relative z-10 py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold mb-4">Why Choose ExpertFinder?</h2>
-            <p className="text-xl text-gray-400">Advanced AI that revolutionizes professional networking</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
-                onHoverStart={() => setHoveredFeature(index)}
-                onHoverEnd={() => setHoveredFeature(null)}
-                className="relative group"
-              >
-                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 h-full transition-all duration-300 hover:border-gray-700 hover:bg-gray-900/80">
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} p-0.5 mb-4`}>
-                    <div className="w-full h-full bg-gray-900 rounded-lg flex items-center justify-center">
-                      <feature.icon className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-gray-400">{feature.description}</p>
-                  
-                  {hoveredFeature === index && (
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-xl pointer-events-none"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+            <div className="bg-gray-50 rounded-2xl p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold">Agentic Qualification Score</h3>
+                <span className="text-sm text-green-600 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Live • 5 results found
+                </span>
+              </div>
+              
+              {/* Score visualization */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="relative w-32 h-32">
+                  <svg className="w-32 h-32 transform -rotate-90">
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="56"
+                      stroke="#e5e7eb"
+                      strokeWidth="12"
+                      fill="none"
                     />
-                  )}
+                    <circle
+                      cx="64"
+                      cy="64"
+                      r="56"
+                      stroke="#06b6d4"
+                      strokeWidth="12"
+                      fill="none"
+                      strokeDasharray={`${2 * Math.PI * 56}`}
+                      strokeDashoffset={`${2 * Math.PI * 56 * (1 - 0.93)}`}
+                      className="transition-all duration-1000"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-bold">93</span>
+                    <span className="text-xs text-gray-500">Score</span>
+                  </div>
                 </div>
-              </motion.div>
-            ))}
+              </div>
+              
+              {/* Results */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Bright Smile</span>
+                  <span className="text-cyan-600">85</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Acme Inc</span>
+                  <span className="text-cyan-600">70</span>
+                </div>
+                <button className="text-xs text-gray-500 mt-2">+4 more ∨</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="relative z-10 py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-gray-400">Connect with anyone in 3 simple steps</p>
+      {/* How it works - Canvas style */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-500 mb-2">How it works</p>
+            <h2 className="text-4xl font-medium text-gray-900 mb-4">
+              Easily convert deals from
+              <br />
+              data in few simple steps
+            </h2>
+            <p className="text-xl text-gray-600">
+              We find warm leads and book qualified meetings, so you can focus on closing
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-5 gap-4 mt-16">
             {[
-              {
-                step: "1",
-                title: "Describe Who You Need",
-                description: "Tell us who you're looking for - experts for hire, potential clients, or business partners",
-                icon: MessageSquare
-              },
-              {
-                step: "2",
-                title: "AI Finds Your Matches",
-                description: "Our AI searches globally and instantly matches you with the right people",
-                icon: Brain
-              },
-              {
-                step: "3",
-                title: "Connect & Grow",
-                description: "Review profiles, send personalized outreach, and build valuable connections",
-                icon: Users
-              }
+              { icon: Search, label: "Discover", color: "from-green-400 to-teal-400" },
+              { icon: Filter, label: "Qualify", color: "from-pink-400 to-purple-400" },
+              { icon: FileText, label: "Enrich", color: "from-purple-400 to-indigo-400" },
+              { icon: MessageSquare, label: "Engage", color: "from-orange-400 to-red-400" },
+              { icon: CheckCircle, label: "Booked", color: "from-yellow-400 to-orange-400" }
             ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.7 + index * 0.2 }}
-                className="relative"
-              >
-                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black font-bold mr-4">
-                      {item.step}
-                    </div>
-                    <item.icon className="w-6 h-6 text-green-400" />
+              <div key={index} className="text-center">
+                <div className={`h-48 rounded-2xl bg-gradient-to-br ${item.color} opacity-20 mb-4 relative overflow-hidden`}>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <item.icon className="w-12 h-12 text-gray-700 opacity-50" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                  <p className="text-gray-400">{item.description}</p>
                 </div>
-                {index < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                    <ArrowRight className="w-8 h-8 text-gray-700" />
-                  </div>
-                )}
-              </motion.div>
+                <h3 className="font-semibold">{item.label}</h3>
+                <button className="text-sm text-gray-600 mt-2 flex items-center gap-1 mx-auto hover:gap-2 transition-all">
+                  Learn more <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-
-      {/* Demo Section */}
-<section className="relative z-10 py-20 px-4 bg-gray-900/50">
-  <div className="max-w-7xl mx-auto">
-    <div className="text-center mb-12">
-      <h2 className="text-4xl font-bold mb-4">Try It Yourself</h2>
-      <p className="text-xl text-gray-400">See how easy it is to find and connect with the right people</p>
-    </div>
-    
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="bg-gray-800 rounded-xl border border-gray-700 p-4 shadow-2xl"
-    >
-      <div style={{ position: 'relative', paddingBottom: 'calc(53.57142857142857% + 41px)', height: 0, width: '100%' }}>
-        <iframe
-          src="https://demo.arcade.software/hvL2WNYn1i1vBj7WTCcK?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
-          title="Find and Connect with AI-Matched Professionals"
-          frameBorder="0"
-          loading="lazy"
-          allowFullScreen
-          allow="clipboard-write"
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', colorScheme: 'light', borderRadius: '8px' }}
-        />
-      </div>
-    </motion.div>
-  </div>
-</section>
-
-
-
-
-      {/* Use Cases / Categories */}
-      <section className="relative z-10 py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Connect Across All Industries</h2>
-            <p className="text-xl text-gray-400">Find experts to hire, clients to serve, or partners to grow with</p>
+      {/* FAQs */}
+      <section className="py-20 px-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm text-gray-500 mb-2">FAQs</p>
+            <h2 className="text-4xl font-medium text-gray-900 mb-4">
+              Frequently asked questions
+            </h2>
+            <p className="text-xl text-gray-600">
+              Everything you need to know about our platform
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              "AI & Machine Learning Experts",
-              "SaaS Company Leads",
-              "Healthcare Professionals",
-              "E-commerce Partners",
-              "FinTech Decision Makers",
-              "Marketing Agencies",
-              "Blockchain Developers",
-              "Enterprise Clients"
-            ].map((category, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1 + index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-                className="bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-700 rounded-lg p-4 text-center cursor-pointer hover:border-green-500 transition-all"
-              >
-                <span className="text-sm font-medium">{category}</span>
-              </motion.div>
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="border-b border-gray-200 pb-4">
+                <button
+                  onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                  className="w-full flex items-center justify-between py-4 text-left hover:text-gray-600 transition-colors"
+                >
+                  <span className="text-lg font-medium">{faq.question}</span>
+                  <ChevronDown className={`w-5 h-5 transition-transform ${
+                    openFAQ === index ? 'rotate-180' : ''
+                  }`} />
+                </button>
+                <AnimatePresence>
+                  {openFAQ === index && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-gray-600 pb-4">{faq.answer}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="relative z-10 py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2 }}
-            className="bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 rounded-2xl p-12"
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-sm text-gray-500 mb-2">Take Action</p>
+          <h2 className="text-5xl font-medium text-gray-900 mb-6">
+            Get Started Today
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Ready to transform your sales process? Book a demo and see
+            <br />
+            how ExpertFinder can deliver qualified leads to your calendar.
+          </p>
+          <button
+            onClick={openSignIn}
+            className="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors text-base font-medium"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Make Your Perfect Connection?
-            </h2>
-            <p className="text-xl text-gray-400 mb-8">
-              Join thousands who've found their ideal experts, clients, and partners
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <SignUpButton mode="modal">
-                <button className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2">
-                  <span>Start Free Trial</span>
-                  <Sparkles className="w-5 h-5" />
-                </button>
-              </SignUpButton>
-            </div>
-            <p className="text-sm text-gray-500 mt-6">
-              No credit card required • Unlimited searches • Cancel anytime
-            </p>
-          </motion.div>
+            Talk to sales
+          </button>
         </div>
       </section>
     </div>
@@ -441,7 +480,7 @@ function AppContent() {
   const [results, setResults] = useState(null);
   const [selectedExpert, setSelectedExpert] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState('standard'); // standard or smart
+  const [searchMode, setSearchMode] = useState('standard');
   const [showDemo, setShowDemo] = useState(false);
   
   // Pagination states
@@ -748,51 +787,40 @@ function AppContent() {
  // Show loading state while Clerk is loading
  if (!isLoaded) {
    return (
-     <div className="min-h-screen bg-black text-white flex items-center justify-center">
-       <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+     <div className="min-h-screen bg-white flex items-center justify-center">
+       <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
      </div>
    );
  }
 
  // Show landing page if not signed in
  if (!isSignedIn) {
-   return <LandingPage />;
+   return <CanvasLandingPage />;
  }
 
- // Main app - now only for signed-in users
+ // Main app - Canvas style for signed-in users
  return (
-   <div className="min-h-screen bg-black text-white flex flex-col">
+   <div className="min-h-screen bg-white flex flex-col">
      {/* Header */}
-     <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md">
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-         <div className="flex justify-between items-center h-14">
-           <div className="flex items-center space-x-8">
-             <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-green-600 text-transparent bg-clip-text">
-               ExpertFinder
-             </h1>
+     <header className="border-b border-gray-200 bg-white">
+       <div className="max-w-7xl mx-auto px-6 lg:px-8">
+         <div className="flex justify-between items-center h-16">
+           <div className="flex items-center space-x-2">
+             <Bot className="h-6 w-6" />
+             <h1 className="text-xl font-medium">ExpertFinder</h1>
            </div>
 
-           <div className="flex items-center space-x-4">
-             {/* Add demo button */}
-             <button 
-               onClick={() => setShowDemo(true)}
-               className="text-gray-400 hover:text-white hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-all"
-             >
-               <Sparkles className="w-4 h-4" />
-               <span className="text-sm">Watch Demo</span>
-             </button>
-             
-             <button className="relative text-gray-400 hover:text-white hidden md:block">
+           <div className="flex items-center space-x-6">
+             <button className="text-gray-600 hover:text-gray-900 hidden md:block">
                <Bell className="w-5 h-5" />
-               <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></span>
              </button>
-             <button className="text-gray-400 hover:text-white hidden md:block">
+             <button className="text-gray-600 hover:text-gray-900 hidden md:block">
                <Settings className="w-5 h-5" />
              </button>
              
              {/* User Section */}
              <div className="flex items-center gap-4">
-               <span className="text-gray-300 hidden md:block text-sm">
+               <span className="text-gray-700 hidden md:block text-sm">
                  {user.firstName || user.username || 'User'}
                </span>
                <UserButton 
@@ -800,8 +828,8 @@ function AppContent() {
                  appearance={{
                    elements: {
                      avatarBox: "w-8 h-8",
-                     userButtonPopoverCard: "bg-gray-900 border border-gray-700",
-                     userButtonPopoverActionButton: "hover:bg-gray-800"
+                     userButtonPopoverCard: "bg-white border border-gray-200",
+                     userButtonPopoverActionButton: "hover:bg-gray-50"
                    }
                  }}
                />
@@ -810,7 +838,7 @@ function AppContent() {
              {/* Mobile menu button */}
              <button
                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-               className="md:hidden text-gray-400 hover:text-white"
+               className="md:hidden text-gray-600 hover:text-gray-900"
              >
                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
              </button>
@@ -819,18 +847,18 @@ function AppContent() {
        </div>
      </header>
 
-     {/* Main Content Area - ChatGPT Style */}
-     <main className="flex-1 flex flex-col relative">
+     {/* Main Content Area */}
+     <main className="flex-1 flex flex-col">
        {/* Results Area */}
-       <div className="flex-1 overflow-y-auto">
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+       <div className="flex-1 overflow-y-auto bg-gray-50">
+         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
            {/* Welcome Message when no search */}
            {!results && !loading && (
              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
                <div className="text-center">
-                 <Sparkles className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                 <h2 className="text-3xl font-bold mb-2">Find Your Perfect Connection</h2>
-                 <p className="text-gray-400">AI-powered matching for experts, clients, and partners</p>
+                 <Bot className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                 <h2 className="text-3xl font-medium text-gray-900 mb-2">Find Your Perfect Connection</h2>
+                 <p className="text-gray-600">AI-powered matching for experts, clients, and partners</p>
                </div>
              </div>
            )}
@@ -839,8 +867,8 @@ function AppContent() {
            {loading && currentPage === 1 && (
              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
                <div className="text-center">
-                 <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
-                 <p className="text-gray-400">Finding the best matches for you...</p>
+                 <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
+                 <p className="text-gray-600">Finding the best matches for you...</p>
                </div>
              </div>
            )}
@@ -852,11 +880,11 @@ function AppContent() {
                <div className="mb-8">
                  <div className="flex items-center justify-between mb-6">
                    <div>
-                     <h3 className="text-2xl font-bold text-white">
-                       Found <span className="text-green-400">{results.total_results}</span> connections
+                     <h3 className="text-2xl font-medium text-gray-900">
+                       Found <span className="text-blue-500">{results.total_results}</span> connections
                      </h3>
                      {searchMode === 'smart' && (
-                       <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
+                       <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
                          <Sparkles className="w-4 h-4" />
                          AI-matched results based on your criteria
                        </p>
@@ -865,15 +893,15 @@ function AppContent() {
                    
                    {/* Sort Options */}
                    <div className="flex items-center gap-2 text-sm">
-                     <button className="px-3 py-1.5 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors flex items-center gap-2">
+                     <button className="px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
                        <TrendingUp className="w-4 h-4" />
                        Relevance
                      </button>
-                     <button className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
+                     <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2">
                        <Star className="w-4 h-4" />
                        Rating
                      </button>
-                     <button className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                     <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
                        Price
                      </button>
                    </div>
@@ -907,24 +935,24 @@ function AppContent() {
                {/* Load More Button */}
                <div className="mt-12 flex justify-center">
                  {isLoadingMore ? (
-                   <div className="px-8 py-4 bg-gray-800 rounded-lg flex items-center gap-3">
-                     <Loader2 className="w-5 h-5 animate-spin text-green-400" />
-                     <span className="text-gray-300">Loading more results...</span>
+                   <div className="px-8 py-3 bg-gray-100 rounded-full flex items-center gap-3">
+                     <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
+                     <span className="text-gray-700">Loading more results...</span>
                    </div>
                  ) : hasMoreResults ? (
                    <button
                      onClick={loadMoreExperts}
-                     className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+                     className="group px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-all duration-300 flex items-center gap-3"
                    >
                      <span>Load More Results</span>
-                     <span className="text-sm opacity-75 bg-black/20 px-2 py-1 rounded">
+                     <span className="text-sm opacity-75 bg-white/20 px-2 py-1 rounded">
                        Page {currentPage + 1}
                      </span>
                      <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
                    </button>
                  ) : results.experts.length >= 10 ? (
                    <div className="text-center">
-                     <p className="text-gray-500 mb-2">
+                     <p className="text-gray-600 mb-2">
                        You've viewed all {results.experts.length} connections
                      </p>
                      <button
@@ -935,7 +963,7 @@ function AppContent() {
                          setHasMoreResults(false);
                          setAllExperts([]);
                        }}
-                       className="text-green-400 hover:text-green-300 text-sm"
+                       className="text-blue-600 hover:text-blue-700 text-sm"
                      >
                        Start a new search
                      </button>
@@ -951,11 +979,11 @@ function AppContent() {
            {results && results.experts && results.experts.length === 0 && (
              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
                <div className="text-center">
-                 <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                 <h3 className="text-xl font-medium text-gray-400 mb-2">
+                 <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                 <h3 className="text-xl font-medium text-gray-700 mb-2">
                    No connections found
                  </h3>
-                 <p className="text-gray-500">
+                 <p className="text-gray-600">
                    Try adjusting your search terms or filters
                  </p>
                </div>
@@ -964,29 +992,29 @@ function AppContent() {
          </div>
        </div>
 
-       {/* Search Bar at Bottom - ChatGPT Style */}
-       <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-md">
-         <div className="max-w-4xl mx-auto px-4 py-4">
+       {/* Search Bar at Bottom */}
+       <div className="border-t border-gray-200 bg-white">
+         <div className="max-w-4xl mx-auto px-6 py-4">
            <div className="relative">
-             <div className="flex items-center bg-gray-800 rounded-xl border border-gray-700 focus-within:border-green-500 transition-all">
-               <Search className="w-5 h-5 text-gray-400 ml-4" />
+             <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 focus-within:border-gray-400 transition-all">
+               <Search className="w-5 h-5 text-gray-400 ml-6" />
                <input
                  type="text"
                  placeholder="Search for experts to hire, potential clients, or business partners..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  onKeyPress={handleSearchKeyPress}
-                 className="flex-1 bg-transparent px-4 py-4 text-white placeholder-gray-500 focus:outline-none"
+                 className="flex-1 bg-transparent px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none"
                />
                <button 
                  onClick={() => setShowFilters(!showFilters)}
-                 className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                 className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
                >
                  <Filter className="w-5 h-5" />
                </button>
                <button 
                  onClick={handleSmartMatch}
-                 className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-medium px-6 py-3 rounded-r-xl transition-all duration-300 flex items-center space-x-2"
+                 className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-all duration-300 flex items-center space-x-2 mr-1"
                >
                  <Sparkles className="w-4 h-4" />
                  <span className="hidden sm:inline">AI Search</span>
@@ -1002,10 +1030,10 @@ function AppContent() {
                    exit={{ height: 0, opacity: 0 }}
                    className="absolute bottom-full mb-2 left-0 right-0 overflow-hidden"
                  >
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700 shadow-xl">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-white rounded-lg border border-gray-200 shadow-lg">
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Budget/Rate</label>
-                       <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                       <label className="text-xs text-gray-500 mb-1 block">Budget/Rate</label>
+                       <select className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900">
                          <option>Any</option>
                          <option>Under $200/hr</option>
                          <option>$200 - $500/hr</option>
@@ -1013,8 +1041,8 @@ function AppContent() {
                        </select>
                      </div>
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Availability</label>
-                       <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                       <label className="text-xs text-gray-500 mb-1 block">Availability</label>
+                       <select className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900">
                          <option>Any</option>
                          <option>Available Now</option>
                          <option>This Week</option>
@@ -1022,8 +1050,8 @@ function AppContent() {
                        </select>
                      </div>
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Connection Type</label>
-                       <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                       <label className="text-xs text-gray-500 mb-1 block">Connection Type</label>
+                       <select className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900">
                          <option>Any</option>
                          <option>Experts for Hire</option>
                          <option>Potential Clients</option>
@@ -1031,8 +1059,8 @@ function AppContent() {
                        </select>
                      </div>
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Industry</label>
-                       <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
+                       <label className="text-xs text-gray-500 mb-1 block">Industry</label>
+                       <select className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900">
                          <option>Any</option>
                          <option>Technology</option>
                          <option>Healthcare</option>
@@ -1079,13 +1107,6 @@ function AppContent() {
          onSend={handleEmailSend}
        />
      )}
-
-     {/* Arcade Demo Modal */}
-     <AnimatePresence>
-       {showDemo && (
-         <ArcadeDemo onClose={() => setShowDemo(false)} />
-       )}
-     </AnimatePresence>
    </div>
  );
 }
