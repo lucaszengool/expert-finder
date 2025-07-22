@@ -10,6 +10,7 @@ import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 import ReactGA from "react-ga4";
 import OutreachDashboard from './components/OutreachDashboard';
+import OutreachCampaignCreator from './components/OutreachCampaignCreator'; 
 
 // Initialize GA4 with your Measurement ID
 const MEASUREMENT_ID = "G-YW4X5SG5QE";
