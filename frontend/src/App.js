@@ -174,10 +174,6 @@ function CanvasLandingPage() {
       {/* Hero Section */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-medium px-3 py-1 rounded-full mb-6">
-            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-            Backed by Y Combinator
-          </div>
           
           <h1 className="text-5xl md:text-6xl font-medium text-gray-900 mb-4">
             AI Outreach System
