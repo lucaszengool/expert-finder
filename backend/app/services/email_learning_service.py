@@ -9,7 +9,22 @@ import re
 
 class EmailLearningService:
     def __init__(self):
-        self.openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Get API key from environment
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        # Initialize OpenAI client properly
+        if api_key:
+            # For newer versions of openai library (1.0+)
+            try:
+                from openai import OpenAI
+                self.openai_client = OpenAI(api_key=api_key)
+            except Exception as e:
+                # Fallback for older versions
+                openai.api_key = api_key
+                self.openai_client = None
+        else:
+            print("Warning: OPENAI_API_KEY not found in environment variables")
+            self.openai_client = None
     
     async def learn_from_examples(
         self,
