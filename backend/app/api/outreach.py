@@ -1,4 +1,3 @@
-# backend/app/api/outreach.py
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
@@ -7,6 +6,9 @@ from app.models.outreach import (
     EmailExample, EmailTemplate,
     BulkOutreachRequest, OutreachAnalytics,
     OutreachTarget, ScheduledMeeting
+)
+from app.models.db_models import (
+    OutreachCampaignDB, OutreachTargetDB, OutreachEmailDB, EmailTemplateDB
 )
 from app.services.enhanced_multi_search_service import enhanced_multi_search_service
 from app.services.email_learning_service import email_learning_service

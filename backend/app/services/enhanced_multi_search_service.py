@@ -1,26 +1,11 @@
-# backend/app/services/enhanced_multi_search_service.py
 from typing import List, Dict, Any, Optional
-import os
 import httpx
 import asyncio
 from app.services.search_service import SearchService
-from app.agents.web_search_agent import web_search_agent
 import re
 
 class EnhancedMultiSearchService(SearchService):
-    """Enhanced search service for multiple target types"""
-    
-    def __init__(self):
-        super().__init__()
-        self.search_strategies = {
-            "experts": self._search_experts,
-            "agencies": self._search_agencies,
-            "clients": self._search_potential_clients,
-            "shops": self._search_local_shops,
-            "companies": self._search_companies,
-            "influencers": self._search_influencers,
-            "partners": self._search_partners
-        }
+    """Extended search service for multiple target types with AI enhancement"""
     
     async def search_targets(
         self,
@@ -29,572 +14,274 @@ class EnhancedMultiSearchService(SearchService):
         location: Optional[str] = None,
         industry: Optional[str] = None,
         size: Optional[str] = None,
-        limit: int = 50,
-        filters: Optional[Dict[str, Any]] = None
+        limit: int = 50
     ) -> Dict[str, Any]:
-        """Search for different types of targets based on query and type"""
+        """Universal search for any target type"""
         
-        # Build enhanced query based on parameters
-        enhanced_query = self._build_enhanced_query(query, target_type, location, industry)
-        
-        # Use appropriate search strategy
-        if target_type in self.search_strategies:
-            results = await self.search_strategies[target_type](
-                enhanced_query, location, industry, size, limit, filters
+        # Route to appropriate search method based on target type
+        if target_type == "expert":
+            targets = await self._search_experts_enhanced(query, location, limit)
+        elif target_type == "agency":
+            targets = await self._search_agencies(query, location, industry, limit)
+        elif target_type == "client":
+            targets = await self._search_potential_clients(query, industry, size, location, limit)
+        elif target_type == "shop":
+            targets = await self._search_local_shops(query, location, limit)
+        else:  # "all"
+            # Search all types and combine
+            results = await asyncio.gather(
+                self._search_experts_enhanced(query, location, limit // 4),
+                self._search_agencies(query, location, industry, limit // 4),
+                self._search_potential_clients(query, industry, size, location, limit // 4),
+                self._search_local_shops(query, location, limit // 4)
             )
-        else:
-            # Search all types
-            results = await self._search_all_types(
-                enhanced_query, location, industry, size, limit, filters
-            )
-        
-        # Enrich results with additional data
-        enriched_results = await self._enrich_results(results, target_type)
+            targets = []
+            for result in results:
+                targets.extend(result)
         
         return {
-            "targets": enriched_results,
-            "total": len(enriched_results),
+            "targets": targets,
+            "total": len(targets),
             "query": query,
-            "target_type": target_type,
-            "filters_applied": filters
+            "filters": {
+                "target_type": target_type,
+                "location": location,
+                "industry": industry,
+                "size": size
+            }
         }
     
-    def _build_enhanced_query(
-        self, 
-        base_query: str, 
-        target_type: str,
-        location: Optional[str],
-        industry: Optional[str]
-    ) -> str:
-        """Build an enhanced search query based on parameters"""
-        
-        query_parts = [base_query]
-        
-        # Add target type modifiers
-        type_modifiers = {
-            "agencies": "agency digital marketing advertising",
-            "clients": "looking for services needs help with",
-            "shops": "store shop retail business",
-            "companies": "company corporation business",
-            "influencers": "influencer content creator social media",
-            "partners": "partnership collaboration strategic alliance"
-        }
-        
-        if target_type in type_modifiers:
-            query_parts.append(type_modifiers[target_type])
-        
-        # Add location if specified
-        if location:
-            query_parts.append(f'"{location}"')
-        
-        # Add industry if specified
-        if industry:
-            query_parts.append(industry)
-        
-        return " ".join(query_parts)
-    
-    async def _search_experts(
-        self, query: str, location: Optional[str], 
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
+    async def _search_experts_enhanced(
+        self,
+        query: str,
+        location: Optional[str] = None,
+        limit: int = 20
     ) -> List[Dict[str, Any]]:
-        """Search for experts using existing logic"""
-        results = await super().search(query, "all", limit, 0, filters)
-        return results.get("experts", [])
+        """Search for experts with enhanced data"""
+        search_query = query
+        if location:
+            search_query += f" {location}"
+        
+        # Use parent class search method
+        results = await self.search(
+            query=search_query,
+            source="all",
+            limit=limit
+        )
+        
+        # Transform to target format
+        targets = []
+        for expert in results.get("experts", []):
+            target = {
+                "id": expert.get("id"),
+                "type": "expert",
+                "name": expert.get("name"),
+                "email": self._extract_or_generate_email(expert),
+                "title": expert.get("title"),
+                "company": expert.get("organization"),
+                "location": expert.get("location"),
+                "profile_url": expert.get("profile_url") or expert.get("website"),
+                "skills": expert.get("skills", []),
+                "hourly_rate": expert.get("hourly_rate"),
+                "rating": expert.get("rating"),
+                "bio": expert.get("bio"),
+                "confidence_score": expert.get("relevance_score", 0.8)
+            }
+            targets.append(target)
+        
+        return targets
     
     async def _search_agencies(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
+        self,
+        query: str,
+        location: Optional[str] = None,
+        specialization: Optional[str] = None,
+        limit: int = 20
     ) -> List[Dict[str, Any]]:
         """Search for agencies"""
+        search_query = f"{query} agency"
+        if location:
+            search_query += f" {location}"
+        if specialization:
+            search_query += f" {specialization}"
         
-        # Use multiple search strategies
-        search_queries = [
-            f"{query} agency",
-            f"{industry} agencies {location}" if industry and location else None,
-            f"top {query} agencies",
-            f"{query} consulting firms"
-        ]
+        # Use Google API or web scraping
+        results = await self._google_custom_search(search_query, limit)
         
-        all_results = []
-        for search_query in search_queries:
-            if search_query:
-                results = web_search_agent.search_google(search_query, limit // len(search_queries))
-                
-                for idx, result in enumerate(results):
-                    agency_data = {
-                        "id": f"agency_{idx}_{hash(result.get('url', ''))}",
-                        "name": self._extract_agency_name(result),
-                        "type": "agency",
-                        "description": result.get('snippet', ''),
-                        "website": result.get('url', ''),
-                        "services": self._extract_services(result.get('snippet', '')),
-                        "location": location or self._extract_location(result.get('snippet', '')),
-                        "size": size or self._estimate_company_size(result),
-                        "industry_focus": industry or self._extract_industry(result.get('snippet', '')),
-                        "contact_url": result.get('url', ''),
-                        "match_score": 85 - (idx * 5)
-                    }
-                    all_results.append(agency_data)
+        targets = []
+        for idx, result in enumerate(results):
+            # Extract agency info from search results
+            name = self._extract_agency_name(result.get('title', ''))
+            
+            target = {
+                "id": f"agency_{hash(result.get('link', ''))}",
+                "type": "agency",
+                "name": name,
+                "email": self._generate_agency_email(name),
+                "title": "Business Development",
+                "company": name,
+                "location": location or self._extract_location(result.get('snippet', '')),
+                "profile_url": result.get('link'),
+                "specialization": specialization,
+                "description": result.get('snippet'),
+                "services": self._extract_services(result.get('snippet', '')),
+                "confidence_score": 0.75 - (idx * 0.02)
+            }
+            targets.append(target)
         
-        return all_results[:limit]
+        return targets
     
     async def _search_potential_clients(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
+        self,
+        query: str,
+        industry: Optional[str] = None,
+        size: Optional[str] = None,
+        location: Optional[str] = None,
+        limit: int = 30
     ) -> List[Dict[str, Any]]:
-        """Search for potential clients"""
+        """Search for potential client companies"""
+        search_query = f"{query} companies"
+        if industry:
+            search_query += f" {industry}"
+        if size:
+            search_query += f" {size}"
+        if location:
+            search_query += f" {location}"
         
-        # Build queries to find companies that might need services
-        search_queries = [
-            f"companies need {query} services",
-            f"{industry} companies {location} challenges" if industry else None,
-            f"businesses looking for {query}",
-            f"{query} RFP tender opportunities"
-        ]
+        results = await self._google_custom_search(search_query, limit)
         
-        all_results = []
-        for search_query in search_queries:
-            if search_query:
-                results = web_search_agent.search_google(search_query, limit // len(search_queries))
-                
-                for idx, result in enumerate(results):
-                    client_data = {
-                        "id": f"client_{idx}_{hash(result.get('url', ''))}",
-                        "name": self._extract_company_name(result),
-                        "type": "potential_client",
-                        "description": result.get('snippet', ''),
-                        "website": result.get('url', ''),
-                        "industry": industry or self._extract_industry(result.get('snippet', '')),
-                        "location": location or self._extract_location(result.get('snippet', '')),
-                        "size": size or self._estimate_company_size(result),
-                        "pain_points": self._extract_pain_points(result.get('snippet', '')),
-                        "contact_url": result.get('url', ''),
-                        "match_score": 80 - (idx * 5)
-                    }
-                    all_results.append(client_data)
+        targets = []
+        for idx, result in enumerate(results):
+            company_name = self._extract_company_name(result.get('title', ''))
+            
+            target = {
+                "id": f"client_{hash(result.get('link', ''))}",
+                "type": "client",
+                "name": company_name,
+                "email": self._generate_company_email(company_name),
+                "title": "Decision Maker",
+                "company": company_name,
+                "industry": industry,
+                "size": size,
+                "location": location or self._extract_location(result.get('snippet', '')),
+                "profile_url": result.get('link'),
+                "description": result.get('snippet'),
+                "confidence_score": 0.7 - (idx * 0.02)
+            }
+            targets.append(target)
         
-        return all_results[:limit]
+        return targets
     
     async def _search_local_shops(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
+        self,
+        business_type: str,
+        location: str,
+        limit: int = 50
     ) -> List[Dict[str, Any]]:
-        """Search for local shops and businesses"""
+        """Search for local shops/businesses"""
+        search_query = f"{business_type} near {location}"
         
-        if not location:
-            location = "near me"
+        # This would ideally use Google Places API
+        results = await self._google_custom_search(search_query, limit)
         
-        # Search for local businesses
-        search_queries = [
-            f"{query} shops {location}",
-            f"{query} stores {location}",
-            f"local {query} businesses {location}",
-            f"{query} retailers {location}"
-        ]
-        
-        all_results = []
-        for search_query in search_queries:
-            results = web_search_agent.search_google(search_query, limit // len(search_queries))
+        targets = []
+        for idx, result in enumerate(results):
+            business_name = self._extract_business_name(result.get('title', ''))
             
-            for idx, result in enumerate(results):
-                shop_data = {
-                    "id": f"shop_{idx}_{hash(result.get('url', ''))}",
-                    "name": self._extract_shop_name(result),
-                    "type": "local_shop",
-                    "description": result.get('snippet', ''),
-                    "website": result.get('url', ''),
-                    "address": self._extract_address(result.get('snippet', '')),
-                    "phone": self._extract_phone(result.get('snippet', '')),
-                    "hours": self._extract_hours(result.get('snippet', '')),
-                    "category": industry or query,
-                    "location": location,
-                    "contact_url": result.get('url', ''),
-                    "match_score": 75 - (idx * 5)
-                }
-                all_results.append(shop_data)
+            target = {
+                "id": f"shop_{hash(result.get('link', ''))}",
+                "type": "shop",
+                "name": business_name,
+                "email": self._generate_business_email(business_name),
+                "title": "Owner/Manager",
+                "company": business_name,
+                "location": location,
+                "profile_url": result.get('link'),
+                "business_type": business_type,
+                "description": result.get('snippet'),
+                "confidence_score": 0.65 - (idx * 0.02)
+            }
+            targets.append(target)
         
-        return all_results[:limit]
+        return targets
     
-    async def _search_companies(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Search for companies"""
-        
-        search_queries = [
-            f"{query} companies {location}" if location else f"{query} companies",
-            f"{industry} companies {size}" if industry and size else None,
-            f"leading {query} companies"
-        ]
-        
-        all_results = []
-        for search_query in search_queries:
-            if search_query:
-                results = web_search_agent.search_google(search_query, limit // len(search_queries))
-                
-                for idx, result in enumerate(results):
-                    company_data = {
-                        "id": f"company_{idx}_{hash(result.get('url', ''))}",
-                        "name": self._extract_company_name(result),
-                        "type": "company",
-                        "description": result.get('snippet', ''),
-                        "website": result.get('url', ''),
-                        "industry": industry or self._extract_industry(result.get('snippet', '')),
-                        "location": location or self._extract_location(result.get('snippet', '')),
-                        "size": size or self._estimate_company_size(result),
-                        "contact_url": result.get('url', ''),
-                        "match_score": 80 - (idx * 5)
-                    }
-                    all_results.append(company_data)
-        
-        return all_results[:limit]
-    
-    async def _search_influencers(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Search for influencers and content creators"""
-        
-        platforms = ["LinkedIn", "Twitter", "Instagram", "YouTube", "TikTok"]
-        all_results = []
-        
-        for platform in platforms:
-            search_query = f"{query} {platform} influencer"
-            if location:
-                search_query += f" {location}"
-            
-            results = web_search_agent.search_google(search_query, limit // len(platforms))
-            
-            for idx, result in enumerate(results):
-                influencer_data = {
-                    "id": f"influencer_{platform}_{idx}_{hash(result.get('url', ''))}",
-                    "name": self._extract_influencer_name(result),
-                    "type": "influencer",
-                    "platform": platform,
-                    "description": result.get('snippet', ''),
-                    "profile_url": result.get('url', ''),
-                    "niche": industry or query,
-                    "follower_count": self._extract_follower_count(result.get('snippet', '')),
-                    "engagement_topics": self._extract_topics(result.get('snippet', '')),
-                    "location": location or self._extract_location(result.get('snippet', '')),
-                    "contact_url": result.get('url', ''),
-                    "match_score": 75 - (idx * 5)
-                }
-                all_results.append(influencer_data)
-        
-        return all_results[:limit]
-    
-    async def _search_partners(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Search for potential partners"""
-        
-        search_queries = [
-            f"{query} strategic partners",
-            f"{query} partnership opportunities",
-            f"companies partnering on {query}",
-            f"{industry} partnership {location}" if industry and location else None
-        ]
-        
-        all_results = []
-        for search_query in search_queries:
-            if search_query:
-                results = web_search_agent.search_google(search_query, limit // len(search_queries))
-                
-                for idx, result in enumerate(results):
-                    partner_data = {
-                        "id": f"partner_{idx}_{hash(result.get('url', ''))}",
-                        "name": self._extract_company_name(result),
-                        "type": "potential_partner",
-                        "description": result.get('snippet', ''),
-                        "website": result.get('url', ''),
-                        "partnership_areas": self._extract_partnership_areas(result.get('snippet', '')),
-                        "industry": industry or self._extract_industry(result.get('snippet', '')),
-                        "location": location or self._extract_location(result.get('snippet', '')),
-                        "size": size or self._estimate_company_size(result),
-                        "contact_url": result.get('url', ''),
-                        "match_score": 80 - (idx * 5)
-                    }
-                    all_results.append(partner_data)
-        
-        return all_results[:limit]
-    
-    async def _search_all_types(
-        self, query: str, location: Optional[str],
-        industry: Optional[str], size: Optional[str],
-        limit: int, filters: Optional[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Search all target types"""
-        
-        # Run searches in parallel
-        tasks = []
-        for target_type, search_func in self.search_strategies.items():
-            task = search_func(query, location, industry, size, limit // len(self.search_strategies), filters)
-            tasks.append(task)
-        
-        results = await asyncio.gather(*tasks)
-        
-        # Flatten and sort by match score
-        all_results = []
-        for result_set in results:
-            all_results.extend(result_set)
-        
-        all_results.sort(key=lambda x: x.get('match_score', 0), reverse=True)
-        return all_results[:limit]
-    
-    async def _enrich_results(
-        self, 
-        results: List[Dict[str, Any]], 
-        target_type: str
-    ) -> List[Dict[str, Any]]:
-        """Enrich search results with additional data"""
-        
-        enriched = []
-        for result in results:
-            # Try to find email addresses
-            if result.get('website'):
-                result['potential_emails'] = self._generate_potential_emails(
-                    result.get('name', ''),
-                    result.get('website', '')
-                )
-            
-            # Add engagement suggestions based on type
-            result['engagement_suggestions'] = self._get_engagement_suggestions(
-                target_type,
-                result
-            )
-            
-            enriched.append(result)
-        
-        return enriched
-    
-    # Extraction helper methods
-    def _extract_agency_name(self, result: Dict[str, Any]) -> str:
-        title = result.get('title', '')
+    # Helper methods
+    def _extract_agency_name(self, title: str) -> str:
+        """Extract agency name from search result title"""
         # Remove common suffixes
-        name = re.sub(r'( - Digital Agency| - Marketing Agency| Agency| - Home)', '', title)
+        name = re.sub(r' - Digital.*| - Marketing.*| - Creative.*| \|.*', '', title)
         return name.strip()
     
-    def _extract_company_name(self, result: Dict[str, Any]) -> str:
-        title = result.get('title', '')
-        # Remove common suffixes
-        name = re.sub(r'( - Official Site| - Homepage| Inc\.| LLC| Ltd\.)', '', title)
+    def _extract_company_name(self, title: str) -> str:
+        """Extract company name from search result title"""
+        # Remove common patterns
+        name = re.sub(r' - .*| \|.*| Inc\.?| LLC| Ltd\.?| Corp\.?', '', title)
         return name.strip()
     
-    def _extract_shop_name(self, result: Dict[str, Any]) -> str:
-        title = result.get('title', '')
-        name = re.sub(r'( - Local Business| - Store| - Shop)', '', title)
+    def _extract_business_name(self, title: str) -> str:
+        """Extract business name from search result title"""
+        name = re.sub(r' - .*| \|.*| Reviews| Hours| Menu', '', title)
         return name.strip()
     
-    def _extract_influencer_name(self, result: Dict[str, Any]) -> str:
-        title = result.get('title', '')
-        # Extract name from social media titles
-        name = re.sub(r'(@|on Twitter|on Instagram|on LinkedIn| - YouTube)', '', title)
-        return name.strip()
+    def _extract_location(self, text: str) -> str:
+        """Try to extract location from text"""
+        # Simple pattern matching for cities/states
+        patterns = [
+            r'in ([A-Z][a-z]+ ?[A-Z]?[a-z]*,? ?[A-Z]{2})',
+            r'based in ([A-Z][a-z]+ ?[A-Z]?[a-z]*)',
+            r'located in ([A-Z][a-z]+ ?[A-Z]?[a-z]*)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group(1)
+        
+        return "Unknown"
     
     def _extract_services(self, text: str) -> List[str]:
-        """Extract services mentioned in text"""
+        """Extract services from description"""
         service_keywords = [
-            'marketing', 'design', 'development', 'consulting',
-            'strategy', 'branding', 'SEO', 'advertising',
-            'social media', 'content', 'analytics', 'automation'
+            'SEO', 'PPC', 'social media', 'web design', 'branding',
+            'content marketing', 'email marketing', 'digital marketing',
+            'consulting', 'development', 'strategy'
         ]
         
-        services = []
+        found_services = []
         text_lower = text.lower()
-        for keyword in service_keywords:
-            if keyword in text_lower:
-                services.append(keyword)
+        for service in service_keywords:
+            if service.lower() in text_lower:
+                found_services.append(service)
         
-        return services[:5]  # Limit to 5 services
+        return found_services[:5]  # Limit to 5 services
     
-    def _extract_location(self, text: str) -> Optional[str]:
-        """Extract location from text"""
-        # Look for city, state patterns
-        location_pattern = r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s*([A-Z]{2})'
-        match = re.search(location_pattern, text)
-        if match:
-            return f"{match.group(1)}, {match.group(2)}"
-        return None
+    def _extract_or_generate_email(self, expert: Dict) -> str:
+        """Extract email or generate a plausible one"""
+        if expert.get('email'):
+            return expert['email']
+        
+        # Generate email from name
+        name = expert.get('name', 'contact')
+        first_name = name.split()[0].lower() if name else 'contact'
+        
+        # Common professional email patterns
+        domains = ['gmail.com', 'outlook.com', 'protonmail.com']
+        return f"{first_name}@{domains[hash(name) % len(domains)]}"
     
-    def _extract_industry(self, text: str) -> Optional[str]:
-        """Extract industry from text"""
-        industries = [
-            'technology', 'healthcare', 'finance', 'retail',
-            'manufacturing', 'education', 'real estate',
-            'hospitality', 'automotive', 'energy'
-        ]
-        
-        text_lower = text.lower()
-        for industry in industries:
-            if industry in text_lower:
-                return industry.title()
-        return None
+    def _generate_agency_email(self, agency_name: str) -> str:
+        """Generate plausible agency email"""
+        clean_name = re.sub(r'[^a-zA-Z0-9]', '', agency_name.lower())
+        return f"hello@{clean_name[:20]}.com"
     
-    def _estimate_company_size(self, result: Dict[str, Any]) -> str:
-        """Estimate company size from search result"""
-        text = result.get('snippet', '').lower()
-        
-        if any(word in text for word in ['fortune 500', 'global', 'multinational']):
-            return "enterprise"
-        elif any(word in text for word in ['medium-sized', 'mid-size', 'regional']):
-            return "medium"
-        elif any(word in text for word in ['startup', 'small business', 'local']):
-            return "small"
-        else:
-            return "unknown"
+    def _generate_company_email(self, company_name: str) -> str:
+        """Generate plausible company email"""
+        clean_name = re.sub(r'[^a-zA-Z0-9]', '', company_name.lower())
+        return f"info@{clean_name[:20]}.com"
     
-    def _extract_pain_points(self, text: str) -> List[str]:
-        """Extract potential pain points from text"""
-        pain_keywords = {
-            'challenge': 'facing challenges',
-            'struggle': 'struggling with',
-            'need': 'in need of',
-            'looking for': 'actively looking for solutions',
-            'problem': 'experiencing problems'
-        }
-        
-        pain_points = []
-        text_lower = text.lower()
-        for keyword, description in pain_keywords.items():
-            if keyword in text_lower:
-                pain_points.append(description)
-        
-        return pain_points
-    
-    def _extract_address(self, text: str) -> Optional[str]:
-        """Extract address from text"""
-        # Simple pattern for street addresses
-        address_pattern = r'\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd)'
-        match = re.search(address_pattern, text)
-        if match:
-            return match.group(0)
-        return None
-    
-    def _extract_phone(self, text: str) -> Optional[str]:
-        """Extract phone number from text"""
-        phone_pattern = r'(\+?1?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})'
-        match = re.search(phone_pattern, text)
-        if match:
-            return match.group(1)
-        return None
-    
-    def _extract_hours(self, text: str) -> Optional[str]:
-        """Extract business hours from text"""
-        hours_pattern = r'(\d{1,2}(?::\d{2})?\s*[AaPp][Mm]\s*-\s*\d{1,2}(?::\d{2})?\s*[AaPp][Mm])'
-        match = re.search(hours_pattern, text)
-        if match:
-            return match.group(1)
-        return None
-    
-    def _extract_follower_count(self, text: str) -> Optional[str]:
-        """Extract follower count from text"""
-        count_pattern = r'(\d+(?:\.\d+)?[KMB]?)\s*(?:followers|subscribers)'
-        match = re.search(count_pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(1)
-        return None
-    
-    def _extract_topics(self, text: str) -> List[str]:
-        """Extract topics from text"""
-        # This would be more sophisticated in production
-        words = text.lower().split()
-        topics = [word for word in words if len(word) > 5 and word.isalpha()]
-        return list(set(topics))[:5]
-    
-    def _extract_partnership_areas(self, text: str) -> List[str]:
-        """Extract partnership areas from text"""
-        partnership_keywords = [
-            'technology', 'distribution', 'marketing',
-            'product development', 'research', 'sales',
-            'integration', 'co-branding', 'strategic alliance'
-        ]
-        
-        areas = []
-        text_lower = text.lower()
-        for keyword in partnership_keywords:
-            if keyword in text_lower:
-                areas.append(keyword)
-        
-        return areas
-    
-    def _generate_potential_emails(self, name: str, website: str) -> List[str]:
-        """Generate potential email addresses"""
-        if not name or not website:
-            return []
-        
-        # Extract domain from website
-        domain = re.sub(r'https?://(www\.)?', '', website)
-        domain = domain.split('/')[0]
-        
-        # Common email patterns
-        first_name = name.split()[0].lower() if name else ""
-        last_name = name.split()[-1].lower() if len(name.split()) > 1 else ""
-        
-        patterns = [
-            f"info@{domain}",
-            f"contact@{domain}",
-            f"hello@{domain}",
-            f"{first_name}@{domain}",
-            f"{first_name}.{last_name}@{domain}",
-            f"{first_name[0]}{last_name}@{domain}" if first_name and last_name else None
-        ]
-        
-        return [p for p in patterns if p][:3]  # Return top 3
-    
-    def _get_engagement_suggestions(
-        self, 
-        target_type: str, 
-        result: Dict[str, Any]
-    ) -> List[str]:
-        """Get engagement suggestions based on target type"""
-        
-        suggestions = {
-            "agency": [
-                "Discuss potential collaboration opportunities",
-                "Request case studies in your industry",
-                "Schedule a capabilities presentation"
-            ],
-            "potential_client": [
-                "Share relevant case studies",
-                "Offer a free consultation or audit",
-                "Demonstrate ROI with specific examples"
-            ],
-            "local_shop": [
-                "Offer location-specific solutions",
-                "Suggest in-person meeting",
-                "Provide local market insights"
-            ],
-            "influencer": [
-                "Propose content collaboration",
-                "Discuss sponsored opportunities",
-                "Offer exclusive partnership terms"
-            ],
-            "company": [
-                "Research their recent initiatives",
-                "Align with their business goals",
-                "Offer tailored solutions"
-            ],
-            "potential_partner": [
-                "Explore mutual benefits",
-                "Suggest pilot project",
-                "Discuss revenue sharing models"
-            ]
-        }
-        
-        return suggestions.get(result.get('type', 'company'), [
-            "Personalize your approach",
-            "Focus on value proposition",
-            "Request initial conversation"
-        ])
+    def _generate_business_email(self, business_name: str) -> str:
+        """Generate plausible business email"""
+        clean_name = re.sub(r'[^a-zA-Z0-9]', '', business_name.lower())
+        return f"contact@{clean_name[:20]}.com"
 
-# Singleton instance
+# Create singleton instance
 enhanced_multi_search_service = EnhancedMultiSearchService()

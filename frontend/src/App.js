@@ -9,6 +9,7 @@ import { searchExpertsEnhanced, smartMatchExperts } from './services/api';
 import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 import ReactGA from "react-ga4";
+import OutreachDashboard from './components/OutreachDashboard';
 
 // Initialize GA4 with your Measurement ID
 const MEASUREMENT_ID = "G-YW4X5SG5QE";
@@ -247,190 +248,189 @@ function CanvasLandingPage() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-medium text-gray-900 mb-4">
-              Stop searching for connections.
-              <br />
-              Start closing them.
-            </h2>
-            <p className="text-xl text-gray-600">
-              AI Outreach Agents that find anyone you need - experts, clients, or partners -
-              <br />
-              then automatically engage, negotiate, and book meetings at scale.
+<section className="py-20 px-6">
+  <div className="max-w-6xl mx-auto">
+    <div className="text-center mb-16">
+      <h2 className="text-4xl font-medium text-gray-900 mb-4">
+        Stop searching for connections.
+        <br />
+        Start closing them.
+      </h2>
+      <p className="text-xl text-gray-600">
+        AI Outreach Agents that find anyone you need - experts, clients, or partners -
+        <br />
+        then automatically engage, negotiate, and book meetings at scale.
+      </p>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-8">
+      {/* Multi-Target Search */}
+      <div className="bg-gray-50 rounded-2xl p-8">
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Search className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold">AI-Powered Search</h3>
+          </div>
+          <p className="text-gray-600">
+            Finds experts to hire, potential clients, or business partners across millions of profiles.
+          </p>
+        </div>
+        
+        {/* Mock search results */}
+        <div className="space-y-3">
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-white font-medium">
+                  JD
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">John Davis - AI Expert</h4>
+                  <p className="text-sm text-gray-500">Machine Learning Engineer • $350/hr</p>
+                </div>
+              </div>
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center text-white font-medium">
+                  TC
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">TechCorp Inc - Potential Client</h4>
+                  <p className="text-sm text-gray-500">Looking for AI solutions • 500 employees</p>
+                </div>
+              </div>
+              <Target className="w-5 h-5 text-purple-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Learning & Outreach */}
+      <div className="bg-gray-50 rounded-2xl p-8">
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Mail className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold">Learn & Send at Scale</h3>
+          </div>
+          <p className="text-gray-600">
+            AI learns from your successful emails and sends personalized outreach automatically.
+          </p>
+        </div>
+        
+        {/* Mock email preview */}
+        <div className="space-y-2">
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-900">To: sarah@techstartup.com</span>
+              <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">Sent</span>
+            </div>
+            <p className="text-sm text-gray-700 line-clamp-3">
+              Hi Sarah, I noticed TechStartup is scaling its AI initiatives. 
+              We've helped similar companies reduce ML deployment time by 70%...
             </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Multi-Target Search */}
-            <div className="bg-gray-50 rounded-2xl p-8">
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Search className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold">AI-Powered Search</h3>
-                </div>
-                <p className="text-gray-600">
-                  Finds experts to hire, potential clients, or business partners across millions of profiles.
-                </p>
-              </div>
-              
-              {/* Mock search results */}
-              <div className="space-y-3">
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-white font-medium">
-                        JD
-                      </div>
-                      <div>
-                        <h4 className="font-medium">John Davis - AI Expert</h4>
-                        <p className="text-sm text-gray-500">Machine Learning Engineer • $350/hr</p>
-                      </div>
-                    </div>
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center text-white font-medium">
-                        TC
-                      </div>
-                      <div>
-                        <h4 className="font-medium">TechCorp Inc - Potential Client</h4>
-                        <p className="text-sm text-gray-500">Looking for AI solutions • 500 employees</p>
-                      </div>
-                    </div>
-                    <Target className="w-5 h-5 text-purple-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Learning & Outreach */}
-            <div className="bg-gray-50 rounded-2xl p-8">
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold">Learn & Send at Scale</h3>
-                </div>
-                <p className="text-gray-600">
-                  AI learns from your successful emails and sends personalized outreach automatically.
-                </p>
-              </div>
-              
-              {/* Mock email preview */}
-              <div className="space-y-2">
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">To: sarah@techstartup.com</span>
-                    <span className="text-xs text-green-600">Sent</span>
-                  </div>
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    Hi Sarah, I noticed TechStartup is scaling its AI initiatives. 
-                    We've helped similar companies reduce ML deployment time by 70%...
-                  </p>
-                  <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Opened
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MessageSquare className="w-3 h-3" /> Replied
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-3 flex items-center gap-4 text-xs text-gray-600">
+              <span className="flex items-center gap-1">
+                <CheckCircle className="w-3 h-3 text-green-500" /> Opened
+              </span>
+              <span className="flex items-center gap-1">
+                <MessageSquare className="w-3 h-3 text-blue-500" /> Replied
+              </span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          {/* AI Agents */}
-          <div className="mt-8 grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-                <span className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg">AI Negotiation Agent</span>
-              </h3>
-              <p className="text-gray-700 mb-6 bg-purple-50 p-3 rounded-lg">
-                Handles responses, negotiates terms, and closes deals while you sleep
-              </p>
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs font-medium">C</div>
-                    <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
-                      <p className="text-sm">What's your budget for this project?</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium shadow">AI</div>
-                    <div className="flex-1 bg-purple-50 rounded-lg p-3 border border-purple-200">
-                      <p className="text-sm">We offer flexible packages starting at $5k/month. 
-                      Based on your needs, I'd recommend our Growth plan. Should we schedule a call to discuss details?</p>
-                    </div>
-                  </div>
-                </div>
+    {/* AI Agents */}
+    <div className="mt-8 grid md:grid-cols-2 gap-8">
+      <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow">
+            <Bot className="w-5 h-5 text-white" />
+          </div>
+          <span className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg">AI Negotiation Agent</span>
+        </h3>
+        <p className="text-gray-700 mb-6 bg-purple-50 p-3 rounded-lg">
+          Handles responses, negotiates terms, and closes deals while you sleep
+        </p>
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xs font-medium text-white">C</div>
+              <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
+                <p className="text-sm text-gray-800">What's your budget for this project?</p>
               </div>
-              <button 
-                onClick={() => console.log('Learn more about AI Negotiation')}
-                className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all mt-4 text-purple-600 hover:text-purple-700"
-              >
-                Learn more <ArrowRight className="w-4 h-4" />
-              </button>
             </div>
-
-            <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg">Meeting Scheduler AI</span>
-                </h3>
-                <span className="text-sm text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Live
-                </span>
-              </div>
-              
-              {/* Calendar visualization */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="grid grid-cols-5 gap-2 text-center mb-3">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-                    <div key={day} className="text-xs text-gray-500 font-medium">{day}</div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {[...Array(15)].map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-8 rounded ${
-                        [3, 7, 9, 12].includes(i) 
-                          ? 'bg-gradient-to-br from-blue-400 to-blue-500 shadow-sm' 
-                          : 'bg-gray-100'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              
-              {/* Stats */}
-              <div className="mt-4 flex items-center justify-between text-sm bg-blue-50 rounded-lg p-3 border border-blue-200">
-                <span className="text-gray-700">This week:</span>
-                <span className="font-medium text-blue-600">4 meetings booked</span>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium shadow">AI</div>
+              <div className="flex-1 bg-purple-50 rounded-lg p-3 border border-purple-200">
+                <p className="text-sm text-gray-800">We offer flexible packages starting at $5k/month. 
+                Based on your needs, I'd recommend our Growth plan. Should we schedule a call to discuss details?</p>
               </div>
             </div>
           </div>
         </div>
-      </section>
+        <button 
+          onClick={() => console.log('Learn more about AI Negotiation')}
+          className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all mt-4 text-purple-600 hover:text-purple-700"
+        >
+          Learn more <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow">
+              <Calendar className="w-5 h-5 text-white" />
+            </div>
+            <span className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg">Meeting Scheduler AI</span>
+          </h3>
+          <span className="text-sm text-green-600 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full font-medium">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Live
+          </span>
+        </div>
+        
+        {/* Calendar visualization */}
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="grid grid-cols-5 gap-2 text-center mb-3">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+              <div key={day} className="text-xs text-gray-600 font-medium">{day}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {[...Array(15)].map((_, i) => (
+              <div 
+                key={i} 
+                className={`h-8 rounded ${
+                  [3, 7, 9, 12].includes(i) 
+                    ? 'bg-gradient-to-br from-blue-400 to-blue-500 shadow-sm' 
+                    : 'bg-gray-200'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+        
+        {/* Stats */}
+        <div className="mt-4 flex items-center justify-between text-sm bg-blue-50 rounded-lg p-3 border border-blue-200">
+          <span className="text-gray-700 font-medium">This week:</span>
+          <span className="font-semibold text-blue-600">4 meetings booked</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* How it works - Canvas style */}
       <section className="py-20 px-6 bg-gray-50">
@@ -685,6 +685,59 @@ function AppContent() {
     }
   };
 
+
+  const EnhancedSearchInterface = () => {
+  const [outreachMode, setOutreachMode] = useState(false);
+  
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Search Mode Toggle */}
+      <div className="flex justify-center mb-6">
+        <div className="inline-flex rounded-lg border border-gray-200 p-1">
+          <button
+            onClick={() => setOutreachMode(false)}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              !outreachMode 
+                ? 'bg-blue-600 text-white' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Search className="w-4 h-4 inline mr-2" />
+            Find & Connect
+          </button>
+          <button
+            onClick={() => setOutreachMode(true)}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              outreachMode 
+                ? 'bg-purple-600 text-white' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Bot className="w-4 h-4 inline mr-2" />
+            AI Outreach Campaign
+          </button>
+        </div>
+      </div>
+      
+      {outreachMode ? (
+        <OutreachCampaignCreator 
+          onClose={() => setOutreachMode(false)}
+          onCampaignCreated={(campaign) => {
+            console.log('Campaign created:', campaign);
+            // Navigate to dashboard or show success
+          }}
+        />
+      ) : (
+        // Your existing search interface
+        <div>
+          {/* Existing search UI */}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
   const handleSmartMatch = async () => {
     trackEvent("Search", "AI Search", searchQuery);
     setLoading(true);
@@ -856,6 +909,35 @@ function AppContent() {
      setLoading(false);
    }
  };
+
+const OutreachButton = () => {
+  const [showOutreach, setShowOutreach] = useState(false);
+  
+  return (
+    <>
+      <button
+        onClick={() => setShowOutreach(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+      >
+        <Bot className="w-4 h-4" />
+        AI Outreach
+      </button>
+      
+      {showOutreach && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <OutreachDashboard />
+          <button
+            onClick={() => setShowOutreach(false)}
+            className="fixed top-4 right-4 p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+    </>
+  );
+};
+
 
  // Email handler functions
  const handleEmailClick = (expert) => {

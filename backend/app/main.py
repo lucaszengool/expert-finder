@@ -1,4 +1,3 @@
-# backend/app/main.py
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -23,7 +22,7 @@ from app.routers import clerk_webhook
 # Create FastAPI app
 app = FastAPI(title="Expert Finder API", version="2.0.0")
 
-# Configure CORS - Make sure this happens BEFORE adding routers
+# Configure CORS - FIXED VERSION
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -35,11 +34,10 @@ app.add_middleware(
         "https://expert-finder.up.railway.app",
         "https://expert-finder-production.up.railway.app",
         "https://expertfinderofficial.org",
-        "https://www.expertfinderofficial.org",
-        "*"  # Temporarily allow all origins for debugging
+        "https://www.expertfinderofficial.org"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=3600
@@ -108,5 +106,5 @@ async def health_check():
         "status": "healthy",
         "version": "2.0.0",
         "service": "expert-finder-api",
-        "cors_origins": app.middleware[0].options.get('allow_origins', []) if app.middleware else []
+        "outreach_enabled": OUTREACH_ENABLED
     }
