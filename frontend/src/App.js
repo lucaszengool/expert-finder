@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User, ChevronDown, Brain, Zap, Shield, Globe, ArrowRight, CheckCircle, BarChart3, Clock, MessageSquare, Award, Target, Send, Bot, FileText, Calendar } from 'lucide-react';
+import { Search, Filter, Sparkles, Bell, Settings, Menu, X, Loader2, TrendingUp, Users, Star, User, ChevronDown, Brain, Zap, Shield, Globe, ArrowRight, CheckCircle, BarChart3, Clock, MessageSquare, Award, Target, Send, Bot, FileText, Calendar, Mail } from 'lucide-react';
 import { ClerkProvider, SignInButton, SignUpButton, UserButton, useUser, useClerk } from "@clerk/clerk-react";
 import EnhancedExpertCard from './components/modern/EnhancedExpertCard';
 import ExpertDetailModal from './components/modern/ExpertDetailModal';
