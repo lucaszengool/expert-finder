@@ -1,10 +1,17 @@
+"""add outreach and negotiation tables
+
+Revision ID: add_outreach_tables_001
+Revises: 001
+Create Date: 2025-01-23 00:00:00.000000
+
+"""
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers
-revision = 'add_outreach_tables'
-down_revision = 'previous_revision'
+# revision identifiers, used by Alembic.
+revision = 'add_outreach_tables_001'
+down_revision = '001'  # This references your existing migration '001'
 branch_labels = None
 depends_on = None
 
@@ -93,11 +100,11 @@ def upgrade():
 
 def downgrade():
     # Drop indexes
-    op.drop_index('idx_emails_target')
-    op.drop_index('idx_emails_campaign')
-    op.drop_index('idx_targets_status')
-    op.drop_index('idx_targets_campaign')
-    op.drop_index('idx_campaigns_status')
+    op.drop_index('idx_emails_target', 'outreach_emails')
+    op.drop_index('idx_emails_campaign', 'outreach_emails')
+    op.drop_index('idx_targets_status', 'outreach_targets')
+    op.drop_index('idx_targets_campaign', 'outreach_targets')
+    op.drop_index('idx_campaigns_status', 'outreach_campaigns')
     
     # Drop tables
     op.drop_table('outreach_emails')

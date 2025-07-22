@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_outreach_tables_001'
-down_revision = '001'  # This should match the revision ID from your previous migration
+down_revision = '001'  # This references your existing migration '001'
 branch_labels = None
 depends_on = None
 
