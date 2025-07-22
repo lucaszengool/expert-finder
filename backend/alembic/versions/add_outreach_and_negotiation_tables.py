@@ -1,164 +1,113 @@
-"""add_outreach_and_negotiation_tables
+"""add outreach and negotiation tables
 
-Revision ID: xxx
-Revises: 
-Create Date: 2024-01-01
+Revision ID: add_outreach_tables_001
+Revises: 001
+Create Date: 2025-01-23 00:00:00.000000
 
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+# revision identifiers, used by Alembic.
+revision = 'add_outreach_tables_001'
+down_revision = '001'  # This should match the revision ID from your previous migration
+branch_labels = None
+depends_on = None
+
 def upgrade():
-    # Email templates learned from examples
-    op.create_table(
-        'email_templates',
-        sa.Column('id', sa.String(), primary_key=True),
+    # Create email_templates table
+    op.create_table('email_templates',
+        sa.Column('id', sa.String(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
-        sa.Column('category', sa.String()),  # cold_outreach, follow_up, negotiation, meeting_request
-        sa.Column('template_content', sa.Text()),
-        sa.Column('learned_patterns', sa.JSON()),  # Extracted patterns from examples
-        sa.Column('success_rate', sa.Float(), default=0.0),
-        sa.Column('usage_count', sa.Integer(), default=0),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now())
+        sa.Column('category', sa.String(), nullable=True),
+        sa.Column('subject_pattern', sa.Text(), nullable=True),
+        sa.Column('body_pattern', sa.Text(), nullable=True),
+        sa.Column('variables', sa.JSON(), nullable=True),
+        sa.Column('tone', sa.String(), nullable=True),
+        sa.Column('success_rate', sa.Float(), nullable=True),
+        sa.Column('learned_from_count', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.PrimaryKeyConstraint('id')
     )
     
-    # Outreach campaigns
-    op.create_table(
-        'outreach_campaigns',
-        sa.Column('id', sa.String(), primary_key=True),
+    # Create outreach_campaigns table
+    op.create_table('outreach_campaigns',
+        sa.Column('id', sa.String(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
-        sa.Column('description', sa.Text()),
-        sa.Column('search_query', sa.String()),  # Original search query
-        sa.Column('target_type', sa.String()),  # experts, agencies, clients, shops
-        sa.Column('goals', sa.JSON()),  # Campaign goals
-        sa.Column('requirements', sa.JSON()),
-        sa.Column('budget', sa.JSON()),  # min, max, currency
-        sa.Column('template_id', sa.String()),
-        sa.Column('status', sa.String(), default='draft'),  # draft, active, paused, completed
-        sa.Column('created_by', sa.String()),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now())
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('status', sa.String(), nullable=True),
+        sa.Column('target_type', sa.String(), nullable=True),
+        sa.Column('search_query', sa.Text(), nullable=True),
+        sa.Column('template_id', sa.String(), nullable=True),
+        sa.Column('personalization_level', sa.String(), nullable=True),
+        sa.Column('total_targets', sa.Integer(), nullable=True),
+        sa.Column('emails_sent', sa.Integer(), nullable=True),
+        sa.Column('emails_opened', sa.Integer(), nullable=True),
+        sa.Column('emails_replied', sa.Integer(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.ForeignKeyConstraint(['template_id'], ['email_templates.id'], ),
+        sa.PrimaryKeyConstraint('id')
     )
     
-    # Outreach targets (recipients)
-    op.create_table(
-        'outreach_targets',
-        sa.Column('id', sa.String(), primary_key=True),
-        sa.Column('campaign_id', sa.String(), sa.ForeignKey('outreach_campaigns.id')),
-        sa.Column('target_id', sa.String()),  # Could be expert_id or external contact
-        sa.Column('name', sa.String()),
-        sa.Column('email', sa.String()),
-        sa.Column('company', sa.String()),
-        sa.Column('linkedin_url', sa.String()),
-        sa.Column('website', sa.String()),
-        sa.Column('additional_info', sa.JSON()),
-        sa.Column('status', sa.String(), default='pending'),  # pending, contacted, responded, negotiating, closed_won, closed_lost
-        sa.Column('score', sa.Float()),  # Relevance score
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now())
+    # Create outreach_targets table
+    op.create_table('outreach_targets',
+        sa.Column('id', sa.String(), nullable=False),
+        sa.Column('campaign_id', sa.String(), nullable=True),
+        sa.Column('target_type', sa.String(), nullable=True),
+        sa.Column('name', sa.String(), nullable=True),
+        sa.Column('email', sa.String(), nullable=True),
+        sa.Column('title', sa.String(), nullable=True),
+        sa.Column('company', sa.String(), nullable=True),
+        sa.Column('location', sa.String(), nullable=True),
+        sa.Column('profile_url', sa.String(), nullable=True),
+        sa.Column('data', sa.JSON(), nullable=True),
+        sa.Column('status', sa.String(), nullable=True),
+        sa.Column('personalized_subject', sa.Text(), nullable=True),
+        sa.Column('personalized_body', sa.Text(), nullable=True),
+        sa.Column('sent_at', sa.DateTime(), nullable=True),
+        sa.Column('opened_at', sa.DateTime(), nullable=True),
+        sa.Column('replied_at', sa.DateTime(), nullable=True),
+        sa.ForeignKeyConstraint(['campaign_id'], ['outreach_campaigns.id'], ),
+        sa.PrimaryKeyConstraint('id')
     )
     
-    # Email threads
-    op.create_table(
-        'email_threads',
-        sa.Column('id', sa.String(), primary_key=True),
-        sa.Column('campaign_id', sa.String(), sa.ForeignKey('outreach_campaigns.id')),
-        sa.Column('target_id', sa.String(), sa.ForeignKey('outreach_targets.id')),
-        sa.Column('subject', sa.String()),
-        sa.Column('status', sa.String(), default='active'),  # active, closed, archived
-        sa.Column('last_email_at', sa.DateTime()),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now())
-    )
-    
-    # Individual emails
-    op.create_table(
-        'outreach_emails',
-        sa.Column('id', sa.String(), primary_key=True),
-        sa.Column('thread_id', sa.String(), sa.ForeignKey('email_threads.id')),
-        sa.Column('campaign_id', sa.String(), sa.ForeignKey('outreach_campaigns.id')),
-        sa.Column('target_id', sa.String(), sa.ForeignKey('outreach_targets.id')),
-        sa.Column('direction', sa.String()),  # sent, received
-        sa.Column('subject', sa.String()),
-        sa.Column('content', sa.Text()),
-        sa.Column('personalization_data', sa.JSON()),  # Data used for personalization
-        sa.Column('sent_at', sa.DateTime()),
-        sa.Column('opened_at', sa.DateTime()),
-        sa.Column('clicked_at', sa.DateTime()),
-        sa.Column('replied_at', sa.DateTime()),
-        sa.Column('email_type', sa.String()),  # initial, follow_up, negotiation
-        sa.Column('ai_generated', sa.Boolean(), default=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now())
-    )
-    
-    # Negotiation states
-    op.create_table(
-        'negotiations',
-        sa.Column('id', sa.String(), primary_key=True),
-        sa.Column('thread_id', sa.String(), sa.ForeignKey('email_threads.id')),
-        sa.Column('campaign_id', sa.String(), sa.ForeignKey('outreach_campaigns.id')),
-        sa.Column('target_id', sa.String(), sa.ForeignKey('outreach_targets.id')),
-        sa.Column('current_state', sa.String()),  # initial_contact, interest_shown, negotiating_terms, final_offer, closed
-        sa.Column('negotiation_history', sa.JSON()),  # Track offers/counteroffers
-        sa.Column('current_offer', sa.JSON()),
-        sa.Column('target_response', sa.JSON()),
-        sa.Column('next_action', sa.String()),
-        sa.Column('ai_strategy', sa.Text()),  # Current negotiation strategy
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now())
-    )
-    
-    # Scheduled meetings
-    op.create_table(
-        'scheduled_meetings',
-        sa.Column('id', sa.String(), primary_key=True),
-        sa.Column('campaign_id', sa.String(), sa.ForeignKey('outreach_campaigns.id')),
-        sa.Column('target_id', sa.String(), sa.ForeignKey('outreach_targets.id')),
-        sa.Column('thread_id', sa.String(), sa.ForeignKey('email_threads.id')),
-        sa.Column('meeting_type', sa.String()),  # intro_call, demo, negotiation, closing
-        sa.Column('scheduled_at', sa.DateTime()),
-        sa.Column('duration_minutes', sa.Integer()),
-        sa.Column('meeting_link', sa.String()),
-        sa.Column('agenda', sa.Text()),
-        sa.Column('notes', sa.Text()),
-        sa.Column('status', sa.String(), default='scheduled'),  # scheduled, completed, cancelled, rescheduled
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now())
-    )
-    
-    # Learning examples
-    op.create_table(
-        'email_examples',
-        sa.Column('id', sa.String(), primary_key=True),
-        sa.Column('category', sa.String()),  # Type of email
-        sa.Column('subject', sa.String()),
-        sa.Column('content', sa.Text()),
-        sa.Column('success', sa.Boolean()),  # Was it successful?
-        sa.Column('metadata', sa.JSON()),  # Additional context
-        sa.Column('extracted_features', sa.JSON()),  # AI-extracted patterns
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now())
+    # Create outreach_emails table
+    op.create_table('outreach_emails',
+        sa.Column('id', sa.String(), nullable=False),
+        sa.Column('campaign_id', sa.String(), nullable=True),
+        sa.Column('target_id', sa.String(), nullable=True),
+        sa.Column('direction', sa.String(), nullable=True),
+        sa.Column('subject', sa.Text(), nullable=True),
+        sa.Column('body', sa.Text(), nullable=True),
+        sa.Column('sent_at', sa.DateTime(), nullable=True),
+        sa.Column('opened_at', sa.DateTime(), nullable=True),
+        sa.Column('replied_at', sa.DateTime(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+        sa.ForeignKeyConstraint(['campaign_id'], ['outreach_campaigns.id'], ),
+        sa.ForeignKeyConstraint(['target_id'], ['outreach_targets.id'], ),
+        sa.PrimaryKeyConstraint('id')
     )
     
     # Create indexes
     op.create_index('idx_campaigns_status', 'outreach_campaigns', ['status'])
     op.create_index('idx_targets_campaign', 'outreach_targets', ['campaign_id'])
     op.create_index('idx_targets_status', 'outreach_targets', ['status'])
-    op.create_index('idx_emails_thread', 'outreach_emails', ['thread_id'])
-    op.create_index('idx_negotiations_state', 'negotiations', ['current_state'])
-    op.create_index('idx_meetings_scheduled', 'scheduled_meetings', ['scheduled_at'])
+    op.create_index('idx_emails_campaign', 'outreach_emails', ['campaign_id'])
+    op.create_index('idx_emails_target', 'outreach_emails', ['target_id'])
 
 def downgrade():
-    op.drop_index('idx_meetings_scheduled')
-    op.drop_index('idx_negotiations_state')
-    op.drop_index('idx_emails_thread')
-    op.drop_index('idx_targets_status')
-    op.drop_index('idx_targets_campaign')
-    op.drop_index('idx_campaigns_status')
+    # Drop indexes
+    op.drop_index('idx_emails_target', 'outreach_emails')
+    op.drop_index('idx_emails_campaign', 'outreach_emails')
+    op.drop_index('idx_targets_status', 'outreach_targets')
+    op.drop_index('idx_targets_campaign', 'outreach_targets')
+    op.drop_index('idx_campaigns_status', 'outreach_campaigns')
     
-    op.drop_table('email_examples')
-    op.drop_table('scheduled_meetings')
-    op.drop_table('negotiations')
+    # Drop tables
     op.drop_table('outreach_emails')
-    op.drop_table('email_threads')
     op.drop_table('outreach_targets')
     op.drop_table('outreach_campaigns')
     op.drop_table('email_templates')

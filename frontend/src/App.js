@@ -249,7 +249,7 @@ function CanvasLandingPage() {
           </div>
         </div>
       </section>
-      {/* Features Section */}
+     {/* Features Section */}
 <section className="py-20 px-6">
   <div className="max-w-6xl mx-auto">
     <div className="text-center mb-16">
@@ -275,7 +275,7 @@ function CanvasLandingPage() {
             </div>
             <h3 className="text-xl font-semibold">AI-Powered Search</h3>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-800 font-medium">
             Finds experts to hire, potential clients, or business partners across millions of profiles.
           </p>
         </div>
@@ -290,7 +290,7 @@ function CanvasLandingPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">John Davis - AI Expert</h4>
-                  <p className="text-sm text-gray-500">Machine Learning Engineer • $350/hr</p>
+                  <p className="text-sm text-gray-700 font-medium">Machine Learning Engineer • $350/hr</p>
                 </div>
               </div>
               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -304,7 +304,7 @@ function CanvasLandingPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900">TechCorp Inc - Potential Client</h4>
-                  <p className="text-sm text-gray-500">Looking for AI solutions • 500 employees</p>
+                  <p className="text-sm text-gray-700 font-medium">Looking for AI solutions • 500 employees</p>
                 </div>
               </div>
               <Target className="w-5 h-5 text-purple-500" />
@@ -322,7 +322,7 @@ function CanvasLandingPage() {
             </div>
             <h3 className="text-xl font-semibold">Learn & Send at Scale</h3>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-800 font-medium">
             AI learns from your successful emails and sends personalized outreach automatically.
           </p>
         </div>
@@ -334,11 +334,11 @@ function CanvasLandingPage() {
               <span className="text-sm font-medium text-gray-900">To: sarah@techstartup.com</span>
               <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">Sent</span>
             </div>
-            <p className="text-sm text-gray-700 line-clamp-3">
+            <p className="text-sm text-gray-800 font-medium line-clamp-3">
               Hi Sarah, I noticed TechStartup is scaling its AI initiatives. 
               We've helped similar companies reduce ML deployment time by 70%...
             </p>
-            <div className="mt-3 flex items-center gap-4 text-xs text-gray-600">
+            <div className="mt-3 flex items-center gap-4 text-xs text-gray-700 font-medium">
               <span className="flex items-center gap-1">
                 <CheckCircle className="w-3 h-3 text-green-500" /> Opened
               </span>
@@ -360,7 +360,7 @@ function CanvasLandingPage() {
           </div>
           <span className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg">AI Negotiation Agent</span>
         </h3>
-        <p className="text-gray-700 mb-6 bg-purple-50 p-3 rounded-lg">
+        <p className="text-gray-800 font-medium mb-6 bg-purple-50 p-3 rounded-lg">
           Handles responses, negotiates terms, and closes deals while you sleep
         </p>
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -406,7 +406,7 @@ function CanvasLandingPage() {
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="grid grid-cols-5 gap-2 text-center mb-3">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-              <div key={day} className="text-xs text-gray-600 font-medium">{day}</div>
+              <div key={day} className="text-xs text-gray-700 font-medium">{day}</div>
             ))}
           </div>
           <div className="grid grid-cols-5 gap-2">
@@ -425,7 +425,7 @@ function CanvasLandingPage() {
         
         {/* Stats */}
         <div className="mt-4 flex items-center justify-between text-sm bg-blue-50 rounded-lg p-3 border border-blue-200">
-          <span className="text-gray-700 font-medium">This week:</span>
+          <span className="text-gray-800 font-medium">This week:</span>
           <span className="font-semibold text-blue-600">4 meetings booked</span>
         </div>
       </div>
