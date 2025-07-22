@@ -58,7 +58,7 @@ function ArcadeDemo({ onClose }) {
           <div style={{ position: 'relative', paddingBottom: 'calc(53.57142857142857% + 41px)', height: 0, width: '100%' }}>
             <iframe
               src="https://demo.arcade.software/hvL2WNYn1i1vBj7WTCcK?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
-              title="Find and Contact an AI-Matched Expert for Your Project"
+              title="Find and Connect with AI-Matched Professionals"
               frameBorder="0"
               loading="lazy"
               allowFullScreen
@@ -81,33 +81,33 @@ function LandingPage() {
     {
       icon: Brain,
       title: "AI-Powered Matching",
-      description: "Our advanced AI analyzes your requirements to find the perfect expert match",
+      description: "Our advanced AI analyzes your outreach goals to find the perfect connections instantly",
       color: "from-purple-500 to-pink-500"
     },
     {
       icon: Globe,
-      title: "Global Expert Network",
-      description: "Access to over 1M+ verified experts across 150+ countries",
+      title: "Global Professional Network",
+      description: "Access to over 1M+ verified professionals and businesses across 150+ countries",
       color: "from-blue-500 to-cyan-500"
     },
     {
       icon: Shield,
-      title: "Verified Professionals",
-      description: "All experts are thoroughly vetted with verified credentials and reviews",
+      title: "Verified Connections",
+      description: "All profiles are thoroughly vetted with verified credentials, reviews, and active status",
       color: "from-green-500 to-emerald-500"
     },
     {
       icon: Zap,
-      title: "Instant Connection",
-      description: "Connect with experts in real-time through chat, video, or scheduled calls",
+      title: "Instant Outreach",
+      description: "Connect with experts, clients, or partners in real-time through automated personalized outreach",
       color: "from-yellow-500 to-orange-500"
     }
   ];
 
   const stats = [
-    { value: "1M+", label: "Expert Network" },
-    { value: "98%", label: "Satisfaction Rate" },
-    { value: "24/7", label: "Availability" },
+    { value: "1M+", label: "Professional Network" },
+    { value: "98%", label: "Success Rate" },
+    { value: "24/7", label: "AI Availability" },
     { value: "150+", label: "Countries" }
   ];
 
@@ -171,17 +171,17 @@ function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 mb-6">
               <Sparkles className="w-4 h-4 text-green-400" />
-              <span className="text-sm text-green-400">AI-Powered Expert Matching</span>
+              <span className="text-sm text-green-400">AI-Powered Professional Outreach</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-green-100 to-green-400 text-transparent bg-clip-text">
-              Find Your Perfect Expert
+              Find Anyone You Need
               <br />
-              <span className="text-3xl md:text-5xl">In Seconds, Not Hours</span>
+              <span className="text-3xl md:text-5xl">Experts, Clients, Partners - Instantly</span>
             </h1>
             
             <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
-              Connect with verified professionals worldwide. Our AI matches you with the right expert based on your specific needs, budget, and preferences.
+              Connect with the right people worldwide. Our AI matches you with verified experts, potential clients, or business partners based on your specific goals and criteria.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -227,7 +227,7 @@ function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl font-bold mb-4">Why Choose ExpertFinder?</h2>
-            <p className="text-xl text-gray-400">Advanced features that set us apart</p>
+            <p className="text-xl text-gray-400">Advanced AI that revolutionizes professional networking</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -269,27 +269,27 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-gray-400">Get matched with experts in 3 simple steps</p>
+            <p className="text-xl text-gray-400">Connect with anyone in 3 simple steps</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 step: "1",
-                title: "Describe Your Needs",
-                description: "Tell us what expertise you're looking for and your project requirements",
+                title: "Describe Who You Need",
+                description: "Tell us who you're looking for - experts for hire, potential clients, or business partners",
                 icon: MessageSquare
               },
               {
                 step: "2",
-                title: "AI Matches You",
-                description: "Our AI analyzes search experts worldwide and find your perfect matches",
+                title: "AI Finds Your Matches",
+                description: "Our AI searches globally and instantly matches you with the right people",
                 icon: Brain
               },
               {
                 step: "3",
-                title: "Connect & Collaborate",
-                description: "Review profiles, chat with experts, and start your project",
+                title: "Connect & Grow",
+                description: "Review profiles, send personalized outreach, and build valuable connections",
                 icon: Users
               }
             ].map((item, index) => (
@@ -327,7 +327,7 @@ function LandingPage() {
   <div className="max-w-7xl mx-auto">
     <div className="text-center mb-12">
       <h2 className="text-4xl font-bold mb-4">Try It Yourself</h2>
-      <p className="text-xl text-gray-400">See how easy it is to find and contact experts</p>
+      <p className="text-xl text-gray-400">See how easy it is to find and connect with the right people</p>
     </div>
     
     <motion.div
@@ -339,7 +339,7 @@ function LandingPage() {
       <div style={{ position: 'relative', paddingBottom: 'calc(53.57142857142857% + 41px)', height: 0, width: '100%' }}>
         <iframe
           src="https://demo.arcade.software/hvL2WNYn1i1vBj7WTCcK?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
-          title="Find and Contact an AI-Matched Expert for Your Project"
+          title="Find and Connect with AI-Matched Professionals"
           frameBorder="0"
           loading="lazy"
           allowFullScreen
@@ -354,24 +354,24 @@ function LandingPage() {
 
 
 
-      {/* Expert Categories */}
+      {/* Use Cases / Categories */}
       <section className="relative z-10 py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Expert Categories</h2>
-            <p className="text-xl text-gray-400">Find specialists in any field</p>
+            <h2 className="text-4xl font-bold mb-4">Connect Across All Industries</h2>
+            <p className="text-xl text-gray-400">Find experts to hire, clients to serve, or partners to grow with</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              "AI & Machine Learning",
-              "Software Development",
-              "Data Science",
-              "Cybersecurity",
-              "Cloud Architecture",
-              "Blockchain",
-              "UX/UI Design",
-              "Digital Marketing"
+              "AI & Machine Learning Experts",
+              "SaaS Company Leads",
+              "Healthcare Professionals",
+              "E-commerce Partners",
+              "FinTech Decision Makers",
+              "Marketing Agencies",
+              "Blockchain Developers",
+              "Enterprise Clients"
             ].map((category, index) => (
               <motion.div
                 key={index}
@@ -398,10 +398,10 @@ function LandingPage() {
             className="bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 rounded-2xl p-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Find Your Expert?
+              Ready to Make Your Perfect Connection?
             </h2>
             <p className="text-xl text-gray-400 mb-8">
-              Join thousands of professionals who've found their perfect match
+              Join thousands who've found their ideal experts, clients, and partners
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <SignUpButton mode="modal">
@@ -829,8 +829,8 @@ function AppContent() {
              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
                <div className="text-center">
                  <Sparkles className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-                 <h2 className="text-3xl font-bold mb-2">Find Your Perfect Expert</h2>
-                 <p className="text-gray-400">AI-powered matching for the best results</p>
+                 <h2 className="text-3xl font-bold mb-2">Find Your Perfect Connection</h2>
+                 <p className="text-gray-400">AI-powered matching for experts, clients, and partners</p>
                </div>
              </div>
            )}
@@ -840,7 +840,7 @@ function AppContent() {
              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
                <div className="text-center">
                  <Loader2 className="w-8 h-8 animate-spin text-green-500 mx-auto mb-4" />
-                 <p className="text-gray-400">Finding the best experts for you...</p>
+                 <p className="text-gray-400">Finding the best matches for you...</p>
                </div>
              </div>
            )}
@@ -853,12 +853,12 @@ function AppContent() {
                  <div className="flex items-center justify-between mb-6">
                    <div>
                      <h3 className="text-2xl font-bold text-white">
-                       Found <span className="text-green-400">{results.total_results}</span> experts
+                       Found <span className="text-green-400">{results.total_results}</span> connections
                      </h3>
                      {searchMode === 'smart' && (
                        <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
                          <Sparkles className="w-4 h-4" />
-                         AI-matched results based on your preferences
+                         AI-matched results based on your criteria
                        </p>
                      )}
                    </div>
@@ -909,14 +909,14 @@ function AppContent() {
                  {isLoadingMore ? (
                    <div className="px-8 py-4 bg-gray-800 rounded-lg flex items-center gap-3">
                      <Loader2 className="w-5 h-5 animate-spin text-green-400" />
-                     <span className="text-gray-300">Loading more experts...</span>
+                     <span className="text-gray-300">Loading more results...</span>
                    </div>
                  ) : hasMoreResults ? (
                    <button
                      onClick={loadMoreExperts}
                      className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
                    >
-                     <span>Load More Experts</span>
+                     <span>Load More Results</span>
                      <span className="text-sm opacity-75 bg-black/20 px-2 py-1 rounded">
                        Page {currentPage + 1}
                      </span>
@@ -925,7 +925,7 @@ function AppContent() {
                  ) : results.experts.length >= 10 ? (
                    <div className="text-center">
                      <p className="text-gray-500 mb-2">
-                       You've viewed all {results.experts.length} experts
+                       You've viewed all {results.experts.length} connections
                      </p>
                      <button
                        onClick={() => {
@@ -953,7 +953,7 @@ function AppContent() {
                <div className="text-center">
                  <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
                  <h3 className="text-xl font-medium text-gray-400 mb-2">
-                   No experts found
+                   No connections found
                  </h3>
                  <p className="text-gray-500">
                    Try adjusting your search terms or filters
@@ -972,7 +972,7 @@ function AppContent() {
                <Search className="w-5 h-5 text-gray-400 ml-4" />
                <input
                  type="text"
-                 placeholder="Search for experts by skills, industry, or expertise..."
+                 placeholder="Search for experts to hire, potential clients, or business partners..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  onKeyPress={handleSearchKeyPress}
@@ -1004,12 +1004,12 @@ function AppContent() {
                  >
                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-800 rounded-lg border border-gray-700 shadow-xl">
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Hourly Rate</label>
+                       <label className="text-xs text-gray-400 mb-1 block">Budget/Rate</label>
                        <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
                          <option>Any</option>
-                         <option>Under $200</option>
-                         <option>$200 - $500</option>
-                         <option>$500+</option>
+                         <option>Under $200/hr</option>
+                         <option>$200 - $500/hr</option>
+                         <option>$500+/hr</option>
                        </select>
                      </div>
                      <div>
@@ -1022,12 +1022,12 @@ function AppContent() {
                        </select>
                      </div>
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Work Style</label>
+                       <label className="text-xs text-gray-400 mb-1 block">Connection Type</label>
                        <select className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white">
                          <option>Any</option>
-                         <option>Analytical</option>
-                         <option>Creative</option>
-                         <option>Collaborative</option>
+                         <option>Experts for Hire</option>
+                         <option>Potential Clients</option>
+                         <option>Business Partners</option>
                        </select>
                      </div>
                      <div>
@@ -1063,8 +1063,8 @@ function AppContent() {
        <EmailComposer
          expert={selectedExpertForEmail}
          requirements={{
-           projectDetails: searchQuery || "Expert consultation needed",
-           objectives: ["Get expert advice", "Discuss project requirements", "Explore collaboration opportunities"],
+           projectDetails: searchQuery || "Professional connection request",
+           objectives: ["Discuss potential collaboration", "Explore partnership opportunities", "Schedule initial meeting"],
            sessionDuration: 60,
            timeline: "flexible",
            budget: { ideal: 500 },
