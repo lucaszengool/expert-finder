@@ -17,37 +17,93 @@ ReactGA.initialize(MEASUREMENT_ID);
 // Get Clerk publishable key from environment
 const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_live_Y2xlcmsuZXhwZXJ0ZmluZGVyb2ZmaWNpYWwub3JnJA";
 
+// Arcade Demo Component
+function ArcadeDemo({ onClose }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="relative w-full max-w-5xl bg-white rounded-xl border border-gray-300 shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gray-50 border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-500" />
+                See How ExpertFinder Works
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">Interactive demo - Try it yourself!</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Arcade Embed */}
+        <div className="p-4 bg-white">
+          <div style={{ position: 'relative', paddingBottom: 'calc(53.57142857142857% + 41px)', height: 0, width: '100%' }}>
+            <iframe
+              src="https://demo.arcade.software/hvL2WNYn1i1vBj7WTCcK?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
+              title="Find and Connect with AI-Matched Professionals"
+              frameBorder="0"
+              loading="lazy"
+              allowFullScreen
+              allow="clipboard-write"
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', colorScheme: 'light', borderRadius: '8px' }}
+            />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // Canvas-style Landing Page Component
 function CanvasLandingPage() {
   const { openSignUp, openSignIn } = useClerk();
   const [activeStep, setActiveStep] = useState(0);
+  const [showDemo, setShowDemo] = useState(false);
 
   const steps = [
     {
       number: "1",
-      title: "Discover",
-      description: "AI agents scan millions of professionals, businesses, and potential partners worldwide.",
-      icon: Search,
+      title: "Describe Who You Need",
+      description: "Tell our AI agents who you're looking for - experts for hire, potential clients, or business partners.",
+      icon: MessageSquare,
       active: activeStep === 0
     },
     {
       number: "2", 
-      title: "Qualify",
-      description: "Smart AI filters and qualifies matches based on your specific criteria and goals.",
-      icon: Target,
+      title: "AI Finds & Qualifies",
+      description: "Our agents search millions of profiles and qualify matches based on your specific criteria.",
+      icon: Brain,
       active: activeStep === 1
     },
     {
       number: "3",
-      title: "Engage",
-      description: "Automated personalized outreach and negotiation to build valuable connections.",
+      title: "Automated Outreach",
+      description: "AI learns from your email style and sends personalized outreach at scale.",
       icon: Send,
       active: activeStep === 2
     },
     {
       number: "4",
-      title: "Booked",
-      description: "You get meetings with ideal matches while AI handles all the heavy lifting.",
+      title: "Meetings Booked",
+      description: "AI negotiates and schedules meetings directly to your calendar.",
       icon: Calendar,
       active: activeStep === 3
     }
@@ -63,27 +119,27 @@ function CanvasLandingPage() {
   const faqs = [
     {
       question: "What does ExpertFinder actually do?",
-      answer: "ExpertFinder uses AI to find and connect you with experts, potential clients, or business partners. Our AI agents search, qualify, and engage with prospects automatically, booking meetings directly to your calendar."
+      answer: "ExpertFinder uses AI agents to automatically find, qualify, and connect you with experts, potential clients, or business partners. Our AI learns from your email style, sends personalized outreach at scale, negotiates on your behalf, and books meetings directly to your calendar - all while you focus on closing deals."
     },
     {
       question: "Do I need to train the AI or upload data?",
-      answer: "No training needed! Simply describe who you're looking for and our AI instantly starts finding matches. You can optionally upload email examples to personalize outreach style."
+      answer: "No training needed to start! Simply describe who you're looking for and our AI instantly starts finding matches. You can optionally upload successful email examples to teach the AI your communication style for even better personalization."
     },
     {
       question: "Who reaches out to the leads — AI or humans?",
-      answer: "Our AI handles initial outreach and qualification, but all communications are personalized and human-like. You can review and customize any message before it's sent."
+      answer: "Our AI agents handle the entire outreach process - from initial contact to negotiation and meeting scheduling. All communications are AI-powered but sound naturally human. You can review and customize any message before it's sent, or let the AI run on autopilot."
     },
     {
       question: "How fast can I start seeing meetings?",
-      answer: "Most users see their first qualified meetings within 48-72 hours of starting a campaign. The AI works 24/7 to find and engage with your ideal connections."
+      answer: "Most users see their first qualified meetings booked within 48-72 hours. Our AI agents work 24/7, sending personalized outreach, handling responses, and scheduling meetings around the clock."
     },
     {
       question: "Can ExpertFinder integrate with my CRM?",
-      answer: "Yes! We integrate with all major CRMs including Salesforce, HubSpot, and Pipedrive. Your leads and conversations sync automatically."
+      answer: "Yes! We integrate seamlessly with all major CRMs including Salesforce, HubSpot, Pipedrive, and more. All leads, conversations, and meeting data sync automatically."
     },
     {
       question: "Is this better than hiring SDRs?",
-      answer: "ExpertFinder works 24/7, never takes sick days, and scales instantly. It's 10x more cost-effective than SDRs while maintaining consistent quality and personalization."
+      answer: "ExpertFinder's AI agents work 24/7, never take sick days, and scale instantly. They're 10x more cost-effective than SDRs while maintaining consistent quality. Plus, they learn and improve from every interaction."
     }
   ];
 
@@ -123,14 +179,14 @@ function CanvasLandingPage() {
           </div>
           
           <h1 className="text-5xl md:text-6xl font-medium text-gray-900 mb-4">
-            AI Operating System
+            AI Outreach System
             <br />
-            <span className="text-4xl md:text-5xl">for <span className="text-blue-500">B2B Sales</span></span>
+            <span className="text-4xl md:text-5xl">for <span className="text-blue-500">Finding Anyone</span></span>
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            AI Research Agents Find & Enrich Warm Leads. Actual humans
-            book you demos, perfecting every cold call and email.
+            AI Agents find experts, clients, and partners. Learn from your emails,
+            send personalized outreach, negotiate deals, and book meetings automatically.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -140,8 +196,11 @@ function CanvasLandingPage() {
             >
               Get Started
             </button>
-            <button className="px-8 py-3 bg-white text-black border border-gray-300 rounded-full hover:bg-gray-50 transition-colors text-base font-medium">
-              Book a Demo
+            <button 
+              onClick={() => setShowDemo(true)}
+              className="px-8 py-3 bg-white text-black border border-gray-300 rounded-full hover:bg-gray-50 transition-colors text-base font-medium"
+            >
+              Watch Demo
             </button>
           </div>
         </div>
@@ -195,29 +254,29 @@ function CanvasLandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-medium text-gray-900 mb-4">
-              Stop searching for leads.
+              Stop searching for connections.
               <br />
               Start closing them.
             </h2>
             <p className="text-xl text-gray-600">
-              AI Sales Research Agents that crawl every corner of the
+              AI Outreach Agents that find anyone you need - experts, clients, or partners -
               <br />
-              web to find, qualify, and enrich local business data at scale.
+              then automatically engage, negotiate, and book meetings at scale.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Local Business Search */}
+            {/* Multi-Target Search */}
             <div className="bg-gray-50 rounded-2xl p-8">
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Search className="w-6 h-6 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-semibold">Local Businesses Search</h3>
+                  <h3 className="text-xl font-semibold">AI-Powered Search</h3>
                 </div>
                 <p className="text-gray-600">
-                  Finds qualified businesses that match your live buying signals.
+                  Finds experts to hire, potential clients, or business partners across millions of profiles.
                 </p>
               </div>
               
@@ -226,127 +285,135 @@ function CanvasLandingPage() {
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-white font-medium">
+                        JD
                       </div>
                       <div>
-                        <h4 className="font-medium">Bright Smile Digital</h4>
-                        <p className="text-sm text-gray-500">Growing practice • 12 employees</p>
+                        <h4 className="font-medium">John Davis - AI Expert</h4>
+                        <p className="text-sm text-gray-500">Machine Learning Engineer • $350/hr</p>
                       </div>
                     </div>
                     <CheckCircle className="w-5 h-5 text-green-500" />
                   </div>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-200 opacity-60">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-32"></div>
-                      <div className="h-3 bg-gray-100 rounded w-24"></div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center text-white font-medium">
+                        TC
+                      </div>
+                      <div>
+                        <h4 className="font-medium">TechCorp Inc - Potential Client</h4>
+                        <p className="text-sm text-gray-500">Looking for AI solutions • 500 employees</p>
+                      </div>
                     </div>
+                    <Target className="w-5 h-5 text-purple-500" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Enrich Decision Makers */}
+            {/* Email Learning & Outreach */}
             <div className="bg-gray-50 rounded-2xl p-8">
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-green-600" />
+                    <Mail className="w-6 h-6 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold">Enrich Decision Makers</h3>
+                  <h3 className="text-xl font-semibold">Learn & Send at Scale</h3>
                 </div>
                 <p className="text-gray-600">
-                  Leverages 15+ public and proprietary data sources to enrich decision makers.
+                  AI learns from your successful emails and sends personalized outreach automatically.
                 </p>
               </div>
               
-              {/* Mock enriched contacts */}
+              {/* Mock email preview */}
               <div className="space-y-2">
-                {[
-                  { name: "Dr. Sarah Johnson", title: "Owner", initials: "SJ" },
-                  { name: "Dr. Alex Lee", title: "Partner", initials: "AL" },
-                  { name: "Dr. Emily Chen", title: "Pediatric Dentist", initials: "EC" }
-                ].map((person, index) => (
-                  <div key={index} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium">
-                      {person.initials}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{person.name}</h4>
-                      <p className="text-xs text-gray-500">{person.title}</p>
-                    </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">To: sarah@techstartup.com</span>
+                    <span className="text-xs text-green-600">Sent</span>
                   </div>
-                ))}
+                  <p className="text-sm text-gray-600 line-clamp-2">
+                    Hi Sarah, I noticed TechStartup is scaling its AI initiatives. 
+                    We've helped similar companies reduce ML deployment time by 70%...
+                  </p>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Opened
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3" /> Replied
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* AI Qualification Agent */}
+          {/* AI Agents */}
           <div className="mt-8 grid md:grid-cols-2 gap-8">
             <div className="bg-gray-50 rounded-2xl p-8">
-              <h3 className="text-xl font-semibold mb-4">AI Qualification Agent</h3>
+              <h3 className="text-xl font-semibold mb-4">AI Negotiation Agent</h3>
               <p className="text-gray-600 mb-6">
-                24/7 autonomous agents that qualify and prioritize your ICP
+                Handles responses, negotiates terms, and closes deals while you sleep
               </p>
-              <button className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all">
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">C</div>
+                    <div className="flex-1">
+                      <p className="text-sm">What's your budget for this project?</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">AI</div>
+                    <div className="flex-1">
+                      <p className="text-sm">We offer flexible packages starting at $5k/month. 
+                      Based on your needs, I'd recommend our Growth plan. Should we schedule a call to discuss details?</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button className="text-sm font-medium flex items-center gap-2 hover:gap-3 transition-all mt-4">
                 Learn more <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
             <div className="bg-gray-50 rounded-2xl p-8">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Agentic Qualification Score</h3>
+                <h3 className="text-lg font-semibold">Meeting Scheduler AI</h3>
                 <span className="text-sm text-green-600 flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Live • 5 results found
+                  Live • Booking meetings
                 </span>
               </div>
               
-              {/* Score visualization */}
-              <div className="flex items-center justify-center mb-6">
-                <div className="relative w-32 h-32">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="#e5e7eb"
-                      strokeWidth="12"
-                      fill="none"
+              {/* Calendar visualization */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="grid grid-cols-5 gap-2 text-center mb-3">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+                    <div key={day} className="text-xs text-gray-500">{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[...Array(15)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`h-8 rounded ${
+                        [3, 7, 9, 12].includes(i) 
+                          ? 'bg-blue-100 border border-blue-300' 
+                          : 'bg-gray-50'
+                      }`}
                     />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="#06b6d4"
-                      strokeWidth="12"
-                      fill="none"
-                      strokeDasharray={`${2 * Math.PI * 56}`}
-                      strokeDashoffset={`${2 * Math.PI * 56 * (1 - 0.93)}`}
-                      className="transition-all duration-1000"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold">93</span>
-                    <span className="text-xs text-gray-500">Score</span>
-                  </div>
+                  ))}
                 </div>
               </div>
               
-              {/* Results */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Bright Smile</span>
-                  <span className="text-cyan-600">85</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Acme Inc</span>
-                  <span className="text-cyan-600">70</span>
-                </div>
-                <button className="text-xs text-gray-500 mt-2">+4 more ∨</button>
+              {/* Stats */}
+              <div className="mt-4 flex items-center justify-between text-sm">
+                <span>This week:</span>
+                <span className="font-medium text-blue-600">4 meetings booked</span>
               </div>
             </div>
           </div>
@@ -359,22 +426,22 @@ function CanvasLandingPage() {
           <div className="text-center mb-4">
             <p className="text-sm text-gray-500 mb-2">How it works</p>
             <h2 className="text-4xl font-medium text-gray-900 mb-4">
-              Easily convert deals from
+              Easily convert connections into
               <br />
-              data in few simple steps
+              deals in few simple steps
             </h2>
             <p className="text-xl text-gray-600">
-              We find warm leads and book qualified meetings, so you can focus on closing
+              We find your ideal connections and handle outreach, so you can focus on closing
             </p>
           </div>
 
           <div className="grid md:grid-cols-5 gap-4 mt-16">
             {[
-              { icon: Search, label: "Discover", color: "from-green-400 to-teal-400" },
-              { icon: Filter, label: "Qualify", color: "from-pink-400 to-purple-400" },
-              { icon: FileText, label: "Enrich", color: "from-purple-400 to-indigo-400" },
-              { icon: MessageSquare, label: "Engage", color: "from-orange-400 to-red-400" },
-              { icon: CheckCircle, label: "Booked", color: "from-yellow-400 to-orange-400" }
+              { icon: Search, label: "Discover", color: "from-green-400 to-teal-400", desc: "Search for experts, clients, or partners" },
+              { icon: Filter, label: "Qualify", color: "from-pink-400 to-purple-400", desc: "AI qualifies based on your criteria" },
+              { icon: FileText, label: "Learn", color: "from-purple-400 to-indigo-400", desc: "Upload emails to teach AI your style" },
+              { icon: Send, label: "Engage", color: "from-orange-400 to-red-400", desc: "AI sends personalized outreach" },
+              { icon: CheckCircle, label: "Booked", color: "from-yellow-400 to-orange-400", desc: "Meetings scheduled automatically" }
             ].map((item, index) => (
               <div key={index} className="text-center">
                 <div className={`h-48 rounded-2xl bg-gradient-to-br ${item.color} opacity-20 mb-4 relative overflow-hidden`}>
@@ -383,6 +450,7 @@ function CanvasLandingPage() {
                   </div>
                 </div>
                 <h3 className="font-semibold">{item.label}</h3>
+                <p className="text-xs text-gray-600 mt-1 px-2">{item.desc}</p>
                 <button className="text-sm text-gray-600 mt-2 flex items-center gap-1 mx-auto hover:gap-2 transition-all">
                   Learn more <ArrowRight className="w-3 h-3" />
                 </button>
@@ -444,18 +512,25 @@ function CanvasLandingPage() {
             Get Started Today
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Ready to transform your sales process? Book a demo and see
+            Ready to transform your outreach process? See how ExpertFinder
             <br />
-            how ExpertFinder can deliver qualified leads to your calendar.
+            can deliver qualified connections directly to your calendar.
           </p>
           <button
-            onClick={openSignIn}
+            onClick={openSignUp}
             className="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors text-base font-medium"
           >
-            Talk to sales
+            Start Free Trial
           </button>
         </div>
       </section>
+      
+      {/* Arcade Demo Modal */}
+      <AnimatePresence>
+        {showDemo && (
+          <ArcadeDemo onClose={() => setShowDemo(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -800,7 +875,7 @@ function AppContent() {
 
  // Main app - Canvas style for signed-in users
  return (
-   <div className="min-h-screen bg-white flex flex-col">
+   <div className="min-h-screen bg-gray-50 flex flex-col">
      {/* Header */}
      <header className="border-b border-gray-200 bg-white">
        <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -811,6 +886,14 @@ function AppContent() {
            </div>
 
            <div className="flex items-center space-x-6">
+             <button 
+               onClick={() => setShowDemo(true)}
+               className="text-gray-600 hover:text-gray-900 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all"
+             >
+               <Sparkles className="w-4 h-4" />
+               <span className="text-sm">Watch Demo</span>
+             </button>
+             
              <button className="text-gray-600 hover:text-gray-900 hidden md:block">
                <Bell className="w-5 h-5" />
              </button>
@@ -850,15 +933,31 @@ function AppContent() {
      {/* Main Content Area */}
      <main className="flex-1 flex flex-col">
        {/* Results Area */}
-       <div className="flex-1 overflow-y-auto bg-gray-50">
+       <div className="flex-1 overflow-y-auto">
          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
            {/* Welcome Message when no search */}
            {!results && !loading && (
              <div className="flex items-center justify-center h-[calc(100vh-300px)]">
                <div className="text-center">
-                 <Bot className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                 <h2 className="text-3xl font-medium text-gray-900 mb-2">Find Your Perfect Connection</h2>
-                 <p className="text-gray-600">AI-powered matching for experts, clients, and partners</p>
+                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+                   <Bot className="w-10 h-10 text-gray-400" />
+                 </div>
+                 <h2 className="text-3xl font-medium text-gray-900 mb-3">Find Your Perfect Connection</h2>
+                 <p className="text-gray-600 text-lg">AI-powered search for experts, clients, and partners worldwide</p>
+                 <div className="mt-8 flex flex-col items-center gap-3">
+                   <p className="text-sm text-gray-500">Try searching for:</p>
+                   <div className="flex flex-wrap gap-2 justify-center">
+                     {["AI experts", "potential SaaS clients", "marketing agencies", "blockchain developers"].map((suggestion) => (
+                       <button
+                         key={suggestion}
+                         onClick={() => setSearchQuery(suggestion)}
+                         className="px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                       >
+                         {suggestion}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
                </div>
              </div>
            )}
@@ -877,16 +976,16 @@ function AppContent() {
            {results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 && (
              <div>
                {/* Results Header */}
-               <div className="mb-8">
-                 <div className="flex items-center justify-between mb-6">
+               <div className="mb-8 bg-white rounded-xl p-6 border border-gray-200">
+                 <div className="flex items-center justify-between">
                    <div>
                      <h3 className="text-2xl font-medium text-gray-900">
-                       Found <span className="text-blue-500">{results.total_results}</span> connections
+                       Found <span className="text-blue-500">{results.total_results}</span> connections for you
                      </h3>
                      {searchMode === 'smart' && (
                        <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-                         <Sparkles className="w-4 h-4" />
-                         AI-matched results based on your criteria
+                         <Brain className="w-4 h-4 text-blue-500" />
+                         AI-matched results optimized for your needs
                        </p>
                      )}
                    </div>
@@ -894,15 +993,13 @@ function AppContent() {
                    {/* Sort Options */}
                    <div className="flex items-center gap-2 text-sm">
                      <button className="px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
-                       <TrendingUp className="w-4 h-4" />
-                       Relevance
-                     </button>
-                     <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2">
-                       <Star className="w-4 h-4" />
-                       Rating
+                       Best Match
                      </button>
                      <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
                        Price
+                     </button>
+                     <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                       Rating
                      </button>
                    </div>
                  </div>
@@ -1000,7 +1097,7 @@ function AppContent() {
                <Search className="w-5 h-5 text-gray-400 ml-6" />
                <input
                  type="text"
-                 placeholder="Search for experts to hire, potential clients, or business partners..."
+                 placeholder="Search for AI experts, potential SaaS clients, marketing agencies..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
                  onKeyPress={handleSearchKeyPress}
@@ -1012,13 +1109,21 @@ function AppContent() {
                >
                  <Filter className="w-5 h-5" />
                </button>
-               <button 
-                 onClick={handleSmartMatch}
-                 className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-all duration-300 flex items-center space-x-2 mr-1"
-               >
-                 <Sparkles className="w-4 h-4" />
-                 <span className="hidden sm:inline">AI Search</span>
-               </button>
+               <div className="flex gap-2 mr-1">
+                 <button 
+                   onClick={() => handleSearch(1, false)}
+                   className="px-6 py-3 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-all duration-300 flex items-center space-x-2"
+                 >
+                   <span className="hidden sm:inline">Search</span>
+                 </button>
+                 <button 
+                   onClick={handleSmartMatch}
+                   className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-all duration-300 flex items-center space-x-2"
+                 >
+                   <Sparkles className="w-4 h-4" />
+                   <span className="hidden sm:inline">AI Match</span>
+                 </button>
+               </div>
              </div>
 
              {/* Filters */}
@@ -1107,6 +1212,13 @@ function AppContent() {
          onSend={handleEmailSend}
        />
      )}
+     
+     {/* Arcade Demo Modal */}
+     <AnimatePresence>
+       {showDemo && (
+         <ArcadeDemo onClose={() => setShowDemo(false)} />
+       )}
+     </AnimatePresence>
    </div>
  );
 }
