@@ -563,6 +563,7 @@ function App() {
 function AppContent() {
   const { isSignedIn, user, isLoaded } = useUser();
   const { openSignIn } = useClerk();
+  const [showOutreach, setShowOutreach] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -910,30 +911,14 @@ function AppContent() {
  };
 
 const OutreachButton = () => {
-  const [showOutreach, setShowOutreach] = useState(false);
-  
   return (
-    <>
-      <button
-        onClick={() => setShowOutreach(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg"
-      >
-        <Bot className="w-4 h-4" />
-        <span className="font-medium">AI Outreach</span>
-      </button>
-      
-      {showOutreach && (
-        <div className="fixed inset-0 z-50 bg-white">
-          <OutreachDashboard />
-          <button
-            onClick={() => setShowOutreach(false)}
-            className="fixed top-4 right-4 p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-    </>
+    <button
+      onClick={() => setShowOutreach(true)}
+      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md font-medium"
+    >
+      <Bot className="w-4 h-4" />
+      <span>AI Outreach</span>
+    </button>
   );
 };
 
@@ -984,8 +969,9 @@ const OutreachButton = () => {
              <h1 className="text-xl font-medium">ExpertFinder</h1>
            </div>
 
-           <div className="flex items-center space-x-6">
-             <OutreachButton />
+           <div className="flex items-center space-x-4">
+            {/* AI Outreach Button */}
+            <OutreachButton />
              <button 
                onClick={() => setShowDemo(true)}
                className="text-gray-600 hover:text-gray-900 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all"
@@ -1312,6 +1298,13 @@ const OutreachButton = () => {
          onSend={handleEmailSend}
        />
      )}
+
+     {/* AI Outreach Modal */}
+      {showOutreach && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <OutreachDashboard onClose={() => setShowOutreach(false)} />
+        </div>
+      )}
      
      {/* Arcade Demo Modal */}
      <AnimatePresence>
