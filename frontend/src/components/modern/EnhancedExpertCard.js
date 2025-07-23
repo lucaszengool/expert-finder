@@ -1,4 +1,4 @@
-// EnhancedExpertCard.js - Save this in src/components/modern/EnhancedExpertCard.js
+// EnhancedExpertCard.js - Complete updated code with light theme and better visibility
 
 import React, { useState } from 'react';
 import WebsitePreview from './WebsitePreview';
@@ -16,7 +16,6 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   const [imageError, setImageError] = useState(false);
   const [coverImageError, setCoverImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
 
   // Ensure valid phone and email formats
   const formatPhone = (phone) => {
@@ -47,12 +46,12 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
   // Get availability status
   const getAvailabilityStatus = () => {
-    if (expert.available_now) return { text: 'Available Now', color: 'text-green-400', bgColor: 'bg-green-400/10' };
+    if (expert.available_now) return { text: 'Available Now', color: 'text-green-700', bgColor: 'bg-green-100' };
     if (expert.next_available) {
       const hoursUntil = Math.round((new Date(expert.next_available) - new Date()) / (1000 * 60 * 60));
-      if (hoursUntil < 24) return { text: `Available in ${hoursUntil}h`, color: 'text-yellow-400', bgColor: 'bg-yellow-400/10' };
+      if (hoursUntil < 24) return { text: `Available in ${hoursUntil}h`, color: 'text-yellow-700', bgColor: 'bg-yellow-100' };
     }
-    return { text: 'Check Availability', color: 'text-gray-400', bgColor: 'bg-gray-400/10' };
+    return { text: 'Check Availability', color: 'text-gray-600', bgColor: 'bg-gray-100' };
   };
 
   const availability = getAvailabilityStatus();
@@ -63,7 +62,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
   // Profile image with better fallback
   const profileImageUrl = expert.profile_image && !imageError 
     ? expert.profile_image 
-    : `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name || 'Expert')}&background=10b981&color=fff&size=400&font-size=0.4`;
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name || 'Expert')}&background=3b82f6&color=fff&size=400&font-size=0.4`;
 
   // Cover image with fallback based on expertise
   const getCoverImage = () => {
@@ -134,8 +133,6 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
   const websiteData = getWebsiteData();
 
-  // Work samples component - removed since we're using WebsitePreview instead
-
   // Credentials display
   const CredentialBadges = () => {
     if (!expert.credentials || expert.credentials.length === 0) return null;
@@ -144,8 +141,8 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
       <div className="mb-3 space-y-1">
         {expert.credentials.slice(0, 2).map((cred, idx) => (
           <div key={idx} className="flex items-center gap-2">
-            <GraduationCap className="w-3 h-3 text-blue-400 flex-shrink-0" />
-            <span className="text-xs text-gray-300 truncate">
+            <GraduationCap className="w-3 h-3 text-blue-600 flex-shrink-0" />
+            <span className="text-xs text-gray-600 truncate">
               {cred.title} • {cred.issuer}
             </span>
           </div>
@@ -156,7 +153,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
   return (
     <motion.div
-      className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-800 hover:border-gray-700 transition-all duration-300 overflow-hidden group"
+      className="bg-white rounded-2xl border border-gray-200 hover:border-gray-300 transition-all duration-300 overflow-hidden group shadow-sm hover:shadow-lg"
       whileHover={{ y: -4 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
@@ -164,7 +161,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
       {/* Match Score Badge */}
       {matchPercentage > 0 && (
         <div className="absolute top-4 right-4 z-10">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-black text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
             <Sparkles className="w-4 h-4" />
             {matchPercentage}% Match
           </div>
@@ -174,14 +171,14 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
       {/* Header Section */}
       <div className="relative">
         {/* Enhanced Cover Image */}
-        <div className="h-32 bg-gradient-to-br from-gray-800 via-gray-900 to-black relative overflow-hidden">
+        <div className="h-32 bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-100 relative overflow-hidden">
           <img 
             src={getCoverImage()} 
             alt="" 
-            className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-70"
+            className="w-full h-full object-cover opacity-70 transition-opacity group-hover:opacity-80"
             onError={() => setCoverImageError(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-90" />
         </div>
 
         {/* Profile Section */}
@@ -189,8 +186,8 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
           <div className="flex items-end gap-4">
             {/* Profile Image */}
             <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 p-0.5">
-                <div className="w-full h-full rounded-2xl bg-gray-900 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 p-0.5">
+                <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden">
                   <img 
                     src={profileImageUrl}
                     alt={expert.name}
@@ -209,11 +206,17 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
             {/* Quick Stats */}
             <div className="flex-1 mb-3">
               <div className="flex items-center gap-4 text-sm">
-                <div className={`px-3 py-1 rounded-full ${availability.bgColor} ${availability.color} font-medium`}>
+                <div className={`px-3 py-1 rounded-full font-medium ${
+                  availability.text === 'Available Now' 
+                    ? 'bg-green-100 text-green-700' 
+                    : availability.text.includes('Available in')
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
                   {availability.text}
                 </div>
                 {expert.response_time && (
-                  <div className="flex items-center gap-1 text-gray-400">
+                  <div className="flex items-center gap-1 text-gray-500">
                     <Clock className="w-4 h-4" />
                     <span className="text-xs">Responds {expert.response_time}</span>
                   </div>
@@ -224,10 +227,10 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
           {/* Name and Title */}
           <div className="mt-4">
-            <h3 className="text-xl font-bold text-white group-hover:text-green-400 transition-colors">
+            <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
               {expert.name || 'Expert Professional'}
             </h3>
-            <p className="text-gray-400 text-sm mt-1">{expert.title || 'Specialist'}</p>
+            <p className="text-gray-600 text-sm mt-1">{expert.title || 'Specialist'}</p>
           </div>
 
           {/* Rating and Location */}
@@ -237,15 +240,15 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
                 {[...Array(5)].map((_, i) => (
                   <Star 
                     key={i} 
-                    className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} 
+                    className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
                   />
                 ))}
               </div>
-              <span className="text-white font-medium ml-1">{rating.toFixed(1)}</span>
+              <span className="text-gray-900 font-medium ml-1">{rating.toFixed(1)}</span>
               <span className="text-gray-500">({totalReviews})</span>
             </div>
             {expert.location && (
-              <div className="flex items-center gap-1 text-gray-400">
+              <div className="flex items-center gap-1 text-gray-500">
                 <MapPin className="w-4 h-4" />
                 <span>{expert.location}</span>
               </div>
@@ -261,7 +264,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
         {/* Bio */}
         {expert.bio && (
-          <p className="text-gray-300 text-sm line-clamp-2 mb-4">
+          <p className="text-gray-700 text-sm line-clamp-2 mb-4">
             {expert.bio}
           </p>
         )}
@@ -277,13 +280,13 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
             {expert.skills.slice(0, 4).map((skill, idx) => (
               <span 
                 key={idx}
-                className="px-3 py-1 bg-gray-800 text-gray-300 text-xs rounded-full"
+                className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full border border-gray-200"
               >
                 {skill}
               </span>
             ))}
             {expert.skills.length > 4 && (
-              <span className="px-3 py-1 bg-gray-800 text-gray-400 text-xs rounded-full">
+              <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">
                 +{expert.skills.length - 4} more
               </span>
             )}
@@ -292,38 +295,38 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
         {/* Key Stats */}
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-green-400 font-bold text-lg">
+          <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-gray-900 font-bold text-lg">
               {expert.years_of_experience || expert.experience_years || '5+'}
             </div>
-            <div className="text-gray-500 text-xs">Years Exp.</div>
+            <div className="text-gray-600 text-xs">Years Exp.</div>
           </div>
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-green-400 font-bold text-lg">
+          <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-gray-900 font-bold text-lg">
               ${expert.hourly_rate || '250'}
             </div>
-            <div className="text-gray-500 text-xs">Per Hour</div>
+            <div className="text-gray-600 text-xs">Per Hour</div>
           </div>
-          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-            <div className="text-green-400 font-bold text-lg">
+          <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-green-600 font-bold text-lg">
               {expert.satisfaction_rate || '95'}%
             </div>
-            <div className="text-gray-500 text-xs">Satisfaction</div>
+            <div className="text-gray-600 text-xs">Satisfaction</div>
           </div>
         </div>
 
         {/* Match Reasons */}
         {expert.match_reasons && expert.match_reasons.length > 0 && (
-          <div className="mb-4 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-            <div className="text-xs text-green-400 font-medium mb-2 flex items-center gap-1">
+          <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-xs text-green-700 font-medium mb-2 flex items-center gap-1">
               <Sparkles className="w-3 h-3" />
               Why this expert?
             </div>
             <div className="space-y-1">
               {expert.match_reasons.slice(0, 2).map((reason, idx) => (
                 <div key={idx} className="flex items-start gap-2">
-                  <CheckCircle className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-xs text-gray-300">{reason}</span>
+                  <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-xs text-gray-700">{reason}</span>
                 </div>
               ))}
             </div>
@@ -333,17 +336,17 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
         {/* Contact Options */}
         <div className="flex items-center gap-2 mb-4">
           {expert.consultation_types?.includes('video') && (
-            <div className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer">
+            <div className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors cursor-pointer">
               <Video className="w-4 h-4" />
             </div>
           )}
           {validPhone && expert.consultation_types?.includes('phone') && (
-            <div className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer">
+            <div className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors cursor-pointer">
               <Phone className="w-4 h-4" />
             </div>
           )}
           {expert.consultation_types?.includes('chat') && (
-            <div className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer">
+            <div className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors cursor-pointer">
               <MessageCircle className="w-4 h-4" />
             </div>
           )}
@@ -353,7 +356,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
               href={primaryContact.value} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <Globe className="w-4 h-4" />
@@ -364,7 +367,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
               href={expert.linkedin_url || primaryContact?.value} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+              className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <Linkedin className="w-4 h-4" />
@@ -374,15 +377,9 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
 
         {/* Action Buttons */}
         <div className="space-y-2">
-          <div className="mt-6">
-          <WebsitePreview 
-            websites={websiteData} 
-            expert={expert}
-          />
-        </div>
           <button
             onClick={() => onClick(expert)}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-black font-medium py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group shadow-md"
           >
             <span>View Full Profile</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -402,7 +399,7 @@ const EnhancedExpertCard = ({ expert, onClick, onEmailClick }) => {
                   window.location.href = `mailto:${validEmail}?subject=${subject}&body=${body}`;
                 }
               }}
-              className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border border-gray-200"
             >
               <Mail className="w-4 h-4" />
               <span>Send Email</span>

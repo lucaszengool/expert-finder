@@ -682,6 +682,8 @@ function AppContent() {
     }
   };
 
+  
+
 
   const EnhancedSearchInterface = () => {
   const [outreachMode, setOutreachMode] = useState(false);
@@ -914,10 +916,10 @@ const OutreachButton = () => {
     <>
       <button
         onClick={() => setShowOutreach(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg"
       >
         <Bot className="w-4 h-4" />
-        AI Outreach
+        <span className="font-medium">AI Outreach</span>
       </button>
       
       {showOutreach && (
@@ -925,7 +927,7 @@ const OutreachButton = () => {
           <OutreachDashboard />
           <button
             onClick={() => setShowOutreach(false)}
-            className="fixed top-4 right-4 p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+            className="fixed top-4 right-4 p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -983,6 +985,7 @@ const OutreachButton = () => {
            </div>
 
            <div className="flex items-center space-x-6">
+             <OutreachButton />
              <button 
                onClick={() => setShowDemo(true)}
                className="text-gray-600 hover:text-gray-900 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all"
@@ -1073,35 +1076,35 @@ const OutreachButton = () => {
            {results && results.experts && Array.isArray(results.experts) && results.experts.length > 0 && (
              <div>
                {/* Results Header */}
-               <div className="mb-8 bg-white rounded-xl p-6 border border-gray-200">
-                 <div className="flex items-center justify-between">
-                   <div>
-                     <h3 className="text-2xl font-medium text-gray-900">
-                       Found <span className="text-blue-500">{results.total_results}</span> connections for you
-                     </h3>
-                     {searchMode === 'smart' && (
-                       <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-                         <Brain className="w-4 h-4 text-blue-500" />
-                         AI-matched results optimized for your needs
-                       </p>
-                     )}
-                   </div>
-                   
-                   {/* Sort Options */}
-                   <div className="flex items-center gap-2 text-sm">
-                     <button className="px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
-                       Best Match
-                     </button>
-                     <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                       Price
-                     </button>
-                     <button className="px-4 py-2 rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                       Rating
-                     </button>
-                   </div>
-                 </div>
-               </div>
-               
+                <div className="mb-8 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        Found <span className="text-blue-600">{results.total_results}</span> connections for you
+                      </h3>
+                      {searchMode === 'smart' && (
+                        <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                          <Brain className="w-4 h-4 text-blue-500" />
+                          AI-matched results optimized for your needs
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Sort Options */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <button className="px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-2 font-medium">
+                        Best Match
+                      </button>
+                      <button className="px-4 py-2 rounded-full text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors font-medium">
+                        Price
+                      </button>
+                      <button className="px-4 py-2 rounded-full text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors font-medium">
+                        Rating
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                              
                {/* Results Grid */}
                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                  {results.experts.map((expert, idx) => (
