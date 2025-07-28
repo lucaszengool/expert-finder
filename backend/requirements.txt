@@ -23,6 +23,7 @@ anthropic>=0.23.0,<1.0.0
 
 # Basic NLP (without heavy models)
 nltk==3.8.1
+sentence-transformers==2.2.2
 
 # HTTP and API clients
 aiohttp==3.9.1
