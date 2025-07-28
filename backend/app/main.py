@@ -9,25 +9,32 @@ import os
 # Import all routers
 from app.api import experts, search, marketplace, matching, test_debug, email
 
-# Import enhanced outreach modules
+# Import enhanced outreach modules with fallback
 try:
     from app.api import outreach, outreach_enhanced, webhooks
     OUTREACH_ENABLED = True
     ENHANCED_OUTREACH_ENABLED = True
+    print("✅ Full outreach modules loaded")
 except ImportError as e:
-    print(f"Warning: Enhanced outreach modules not found: {e}. Continuing without them.")
+    print(f"⚠️ Enhanced outreach modules not found: {e}")
     try:
         from app.api import outreach
         OUTREACH_ENABLED = True
         ENHANCED_OUTREACH_ENABLED = False
-    except ImportError:
-        print("Warning: Outreach module not found. Continuing without it.")
-        OUTREACH_ENABLED = False
-        ENHANCED_OUTREACH_ENABLED = False
-    except ImportError:
-        print("Warning: Outreach module not found. Continuing without it.")
-        OUTREACH_ENABLED = False
-        ENHANCED_OUTREACH_ENABLED = False
+        print("✅ Basic outreach module loaded")
+    except ImportError as basic_e:
+        print(f"⚠️ Basic outreach module not found: {basic_e}")
+        try:
+            # Try simplified versions
+            from app.api import outreach_enhanced_simple as outreach_enhanced
+            from app.api import webhooks_simple as webhooks
+            OUTREACH_ENABLED = False
+            ENHANCED_OUTREACH_ENABLED = True
+            print("✅ Simplified outreach modules loaded")
+        except ImportError as simple_e:
+            print(f"⚠️ All outreach modules failed: {simple_e}")
+            OUTREACH_ENABLED = False
+            ENHANCED_OUTREACH_ENABLED = False
 
 from app.routers import clerk_webhook
 

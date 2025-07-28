@@ -29,6 +29,23 @@ class PersonalizationLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
 
+class TargetStatus(str, Enum):
+    PENDING = "pending"
+    CONTACTED = "contacted"
+    RESPONDED = "responded"
+    QUALIFIED = "qualified"
+    UNQUALIFIED = "unqualified"
+    CLOSED = "closed"
+
+class EmailCategory(str, Enum):
+    COLD_OUTREACH = "cold_outreach"
+    FOLLOW_UP = "follow_up"
+    INTRODUCTION = "introduction"
+    PITCH = "pitch"
+    MEETING_REQUEST = "meeting_request"
+    THANK_YOU = "thank_you"
+    NEGOTIATION = "negotiation"
+
 class EmailExample(BaseModel):
     subject: str
     body: str
@@ -103,6 +120,50 @@ class OutreachAnalytics(BaseModel):
     meeting_scheduled_rate: float
     closed_won_rate: float
     average_deal_size: float
+
+class OutreachEmail(BaseModel):
+    id: Optional[str] = None
+    campaign_id: str
+    target_id: str
+    subject: str
+    body: str
+    status: EmailStatus = EmailStatus.PENDING
+    sent_at: Optional[datetime] = None
+    opened_at: Optional[datetime] = None
+    replied_at: Optional[datetime] = None
+    bounce_reason: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+class EmailThread(BaseModel):
+    id: Optional[str] = None
+    campaign_id: str
+    target_id: str
+    thread_id: str
+    subject: str
+    messages: List[Dict[str, Any]] = []
+    status: str = "active"
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class NegotiationState(str, Enum):
+    INITIAL = "initial"
+    INTERESTED = "interested"
+    NEGOTIATING = "negotiating"
+    AGREED = "agreed"
+    REJECTED = "rejected"
+    CLOSED = "closed"
+
+class Negotiation(BaseModel):
+    id: Optional[str] = None
+    campaign_id: str
+    target_id: str
+    status: str = "active"
+    state: NegotiationState = NegotiationState.INITIAL
+    terms: Dict[str, Any] = {}
+    messages: List[Dict[str, Any]] = []
+    deal_value: Optional[float] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class ScheduledMeeting(BaseModel):
     id: str
