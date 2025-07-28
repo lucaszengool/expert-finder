@@ -24,6 +24,10 @@ except ImportError as e:
         print("Warning: Outreach module not found. Continuing without it.")
         OUTREACH_ENABLED = False
         ENHANCED_OUTREACH_ENABLED = False
+    except ImportError:
+        print("Warning: Outreach module not found. Continuing without it.")
+        OUTREACH_ENABLED = False
+        ENHANCED_OUTREACH_ENABLED = False
 
 from app.routers import clerk_webhook
 
