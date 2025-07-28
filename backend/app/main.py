@@ -132,3 +132,22 @@ async def health_check():
         "service": "expert-finder-api",
         "outreach_enabled": OUTREACH_ENABLED
     }
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return favicon to prevent 404 errors"""
+    from fastapi.responses import Response
+    return Response(status_code=204)
+
+@app.get("/debug/routes")
+async def debug_routes():
+    """Debug endpoint to list all available routes"""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods) if route.methods else [],
+                "name": getattr(route, 'name', 'unnamed')
+            })
+    return {"routes": routes, "total": len(routes)}
