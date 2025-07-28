@@ -39,7 +39,7 @@ exec python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1\n\
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
-  CMD curl -f http://localhost:$PORT/ || exit 1
+  CMD curl -f http://localhost:$PORT/health || exit 1
 
 EXPOSE $PORT
 
