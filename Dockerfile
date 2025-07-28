@@ -1,4 +1,4 @@
-# Lightweight Railway-optimized Dockerfile
+# Railway-optimized Dockerfile - Fixed
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -9,71 +9,34 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Railway-optimized requirements
-COPY backend/requirements-railway.txt ./requirements.txt
-
-# Install Python dependencies
+# Copy requirements and install dependencies
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r requirements.txt
 
-# Download minimal NLTK data
-RUN python -c "
-import nltk
-try:
-    nltk.download('vader_lexicon', quiet=True)
-    nltk.download('punkt', quiet=True)
-    print('✅ NLTK data downloaded')
-except Exception as e:
-    print(f'⚠️ NLTK download failed: {e}')
-"
+# Download NLTK data (fixed syntax)
+RUN python -c "import nltk; nltk.download('vader_lexicon', quiet=True); nltk.download('punkt', quiet=True); print('NLTK data downloaded')" || echo "NLTK download failed"
 
 # Copy application code
 COPY backend/ .
 
-# Create directories
+# Create necessary directories
 RUN mkdir -p /app/data /app/temp /app/exports
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 ENV PYTHONPATH=/app
-ENV AI_SERVICE_LITE=true
 
-# Create optimized startup script
-RUN cat > /app/start.sh << 'EOF'
-#!/bin/bash
-set -e
-
-echo "🚀 Starting AI Outreach Platform (Railway Optimized)..."
-
-# Check database connection
-echo "Checking database connection..."
-python -c "
-import os
-from sqlalchemy import create_engine, text
-try:
-    db_url = os.getenv('DATABASE_URL')
-    if db_url:
-        engine = create_engine(db_url)
-        with engine.connect() as conn:
-            conn.execute(text('SELECT 1'))
-        print('✅ Database connection successful')
-    else:
-        print('⚠️ No DATABASE_URL provided')
-except Exception as e:
-    print(f'⚠️ Database connection failed: {e}')
-"
-
-# Run migrations
-echo "Running database migrations..."
-python -m alembic upgrade head || echo "⚠️ Migration failed, continuing..."
-
-# Start server
-echo "🌟 Starting server..."
-exec python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
-EOF
-
-RUN chmod +x /app/start.sh
+# Create startup script (fixed)
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "🚀 Starting AI Outreach Platform..."\n\
+echo "Running database migrations..."\n\
+python -m alembic upgrade head || echo "⚠️ Migration failed, continuing..."\n\
+echo "🌟 Starting server..."\n\
+exec python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
