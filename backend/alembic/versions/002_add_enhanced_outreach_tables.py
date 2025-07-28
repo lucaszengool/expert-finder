@@ -16,11 +16,35 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Create enum types
-    op.execute("CREATE TYPE channel_enum AS ENUM ('email', 'instagram', 'whatsapp', 'twitter', 'linkedin', 'sms', 'telegram')")
-    op.execute("CREATE TYPE message_status_enum AS ENUM ('pending', 'queued', 'sent', 'delivered', 'read', 'replied', 'failed', 'bounced')")
-    op.execute("CREATE TYPE campaign_goal_enum AS ENUM ('sales', 'lead_generation', 'partnership', 'recruitment', 'networking', 'customer_success', 'market_research', 'custom')")
-    op.execute("CREATE TYPE conversation_stage_enum AS ENUM ('initial_contact', 'qualification', 'discovery', 'proposal', 'negotiation', 'closing', 'follow_up')")
+    # Create enum types (only if they don't exist)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE channel_enum AS ENUM ('email', 'instagram', 'whatsapp', 'twitter', 'linkedin', 'sms', 'telegram');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE message_status_enum AS ENUM ('pending', 'queued', 'sent', 'delivered', 'read', 'replied', 'failed', 'bounced');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE campaign_goal_enum AS ENUM ('sales', 'lead_generation', 'partnership', 'recruitment', 'networking', 'customer_success', 'market_research', 'custom');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE conversation_stage_enum AS ENUM ('initial_contact', 'qualification', 'discovery', 'proposal', 'negotiation', 'closing', 'follow_up');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
     
     # Create conversation_flows table
     op.create_table('conversation_flows',
