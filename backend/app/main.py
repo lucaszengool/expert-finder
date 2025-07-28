@@ -9,13 +9,21 @@ import os
 # Import all routers
 from app.api import experts, search, marketplace, matching, test_debug, email
 
-# Try to import outreach router if it exists
+# Import enhanced outreach modules
 try:
-    from app.api import outreach
+    from app.api import outreach, outreach_enhanced, webhooks
     OUTREACH_ENABLED = True
-except ImportError:
-    print("Warning: Outreach module not found. Continuing without it.")
-    OUTREACH_ENABLED = False
+    ENHANCED_OUTREACH_ENABLED = True
+except ImportError as e:
+    print(f"Warning: Enhanced outreach modules not found: {e}. Continuing without them.")
+    try:
+        from app.api import outreach
+        OUTREACH_ENABLED = True
+        ENHANCED_OUTREACH_ENABLED = False
+    except ImportError:
+        print("Warning: Outreach module not found. Continuing without it.")
+        OUTREACH_ENABLED = False
+        ENHANCED_OUTREACH_ENABLED = False
 
 from app.routers import clerk_webhook
 
@@ -79,9 +87,13 @@ app.include_router(test_debug.router)
 app.include_router(email.router)
 app.include_router(clerk_webhook.router, tags=["webhooks"])
 
-# Only include outreach router if it exists
+# Include outreach routers if they exist
 if OUTREACH_ENABLED:
     app.include_router(outreach.router)
+    
+if ENHANCED_OUTREACH_ENABLED:
+    app.include_router(outreach_enhanced.router, tags=["Enhanced Outreach"])
+    app.include_router(webhooks.router, tags=["Webhooks"])
 
 @app.on_event("startup")
 async def startup_event():
@@ -89,6 +101,7 @@ async def startup_event():
     init_db()
     print("Database initialized successfully")
     print(f"Outreach module enabled: {OUTREACH_ENABLED}")
+    print(f"Enhanced outreach enabled: {ENHANCED_OUTREACH_ENABLED}")
 
 @app.get("/")
 async def root():

@@ -10,7 +10,8 @@ import strictExpertValidator from './utils/expertValidator';
 import './styles/globals.css';
 import ReactGA from "react-ga4";
 import OutreachDashboard from './components/OutreachDashboard';
-import OutreachCampaignCreator from './components/OutreachCampaignCreator'; 
+import OutreachCampaignCreator from './components/OutreachCampaignCreator';
+import OutreachCampaignManager from './components/OutreachCampaignManager'; 
 
 // Initialize GA4 with your Measurement ID
 const MEASUREMENT_ID = "G-YW4X5SG5QE";
@@ -688,6 +689,7 @@ function AppContent() {
 
   const EnhancedSearchInterface = () => {
   const [outreachMode, setOutreachMode] = useState(false);
+  const [showCampaignManager, setShowCampaignManager] = useState(false);
   
   return (
     <div className="max-w-4xl mx-auto">
@@ -695,9 +697,12 @@ function AppContent() {
       <div className="flex justify-center mb-6">
         <div className="inline-flex rounded-lg border border-gray-200 p-1">
           <button
-            onClick={() => setOutreachMode(false)}
+            onClick={() => {
+              setOutreachMode(false);
+              setShowCampaignManager(false);
+            }}
             className={`px-4 py-2 rounded-md transition-colors ${
-              !outreachMode 
+              !outreachMode && !showCampaignManager
                 ? 'bg-blue-600 text-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
@@ -706,25 +711,44 @@ function AppContent() {
             Find & Connect
           </button>
           <button
-            onClick={() => setOutreachMode(true)}
+            onClick={() => {
+              setOutreachMode(true);
+              setShowCampaignManager(false);
+            }}
             className={`px-4 py-2 rounded-md transition-colors ${
-              outreachMode 
+              outreachMode && !showCampaignManager
                 ? 'bg-purple-600 text-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             <Bot className="w-4 h-4 inline mr-2" />
-            AI Outreach Campaign
+            Create Campaign
+          </button>
+          <button
+            onClick={() => {
+              setOutreachMode(false);
+              setShowCampaignManager(true);
+            }}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              showCampaignManager
+                ? 'bg-green-600 text-white' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Target className="w-4 h-4 inline mr-2" />
+            AI Outreach Hub
           </button>
         </div>
       </div>
       
-      {outreachMode ? (
+      {showCampaignManager ? (
+        <OutreachCampaignManager />
+      ) : outreachMode ? (
         <OutreachCampaignCreator 
           onClose={() => setOutreachMode(false)}
           onCampaignCreated={(campaign) => {
             console.log('Campaign created:', campaign);
-            // Navigate to dashboard or show success
+            setShowCampaignManager(true);
           }}
         />
       ) : (
