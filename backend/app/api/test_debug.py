@@ -3,8 +3,13 @@ from fastapi import HTTPException
 from fastapi import APIRouter
 import os
 import sys
-import chromadb
 from datetime import datetime
+
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    CHROMADB_AVAILABLE = False
 
 router = APIRouter(prefix="/api/test", tags=["test"])
 
@@ -21,6 +26,13 @@ async def health_check():
 @router.get("/chromadb-test")
 async def test_chromadb():
     """Test ChromaDB connection"""
+    if not CHROMADB_AVAILABLE:
+        return {
+            "status": "error",
+            "error": "ChromaDB is not installed",
+            "type": "ImportError"
+        }
+    
     try:
         # Test ChromaDB with telemetry disabled
         client = chromadb.PersistentClient(
