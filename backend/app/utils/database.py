@@ -54,13 +54,19 @@ def init_db():
             print("Database tables created successfully")
         
         # Initialize ChromaDB collections
-        from app.services.vector_search import vector_search_service
-        vector_search_service.init_collections()
+        try:
+            from app.services.vector_search import vector_search_service
+            vector_search_service.init_collections()
+        except Exception as e:
+            print(f"⚠️ Warning: Vector search initialization failed: {e}")
+            # Continue without vector search in deployment environments
+            if not (os.getenv("TESTING") == "true" or os.getenv("RAILWAY_ENVIRONMENT_NAME")):
+                raise
         
-        print("Database initialized successfully")
+        print("✅ Database initialized successfully")
     except Exception as e:
-        print(f"Warning: Database initialization failed: {e}")
-        if os.getenv("TESTING") != "true":
+        print(f"❌ Warning: Database initialization failed: {e}")
+        if not (os.getenv("TESTING") == "true" or os.getenv("RAILWAY_ENVIRONMENT_NAME")):
             raise
 
 # ChromaDB collection getter (for backward compatibility)
