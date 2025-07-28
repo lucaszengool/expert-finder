@@ -28,12 +28,11 @@ ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 ENV PYTHONPATH=/app
 
-# Create startup script (fixed)
+# Create startup script (skip migrations for now)
 RUN echo '#!/bin/bash\n\
 set -e\n\
 echo "🚀 Starting AI Outreach Platform..."\n\
-echo "Running database migrations..."\n\
-python -m alembic upgrade head || echo "⚠️ Migration failed, continuing..."\n\
+echo "⚠️ Skipping database migrations to avoid enum conflicts"\n\
 echo "🌟 Starting server..."\n\
 exec python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1\n\
 ' > /app/start.sh && chmod +x /app/start.sh
