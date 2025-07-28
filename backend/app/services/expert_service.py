@@ -9,10 +9,29 @@ from typing import Any
 
 class ExpertService:
     def __init__(self):
-        # Ensure database is initialized
-        # init_db() - Moved to app startup
-        self.linkedin_collection = get_collection("linkedin_experts")
-        self.scholar_collection = get_collection("scholar_experts")
+        # Lazy-load collections to avoid initialization issues
+        self._linkedin_collection = None
+        self._scholar_collection = None
+    
+    @property
+    def linkedin_collection(self):
+        if self._linkedin_collection is None:
+            try:
+                self._linkedin_collection = get_collection("linkedin_experts")
+            except Exception as e:
+                print(f"⚠️ Failed to load linkedin collection: {e}")
+                return None
+        return self._linkedin_collection
+    
+    @property
+    def scholar_collection(self):
+        if self._scholar_collection is None:
+            try:
+                self._scholar_collection = get_collection("scholar_experts")
+            except Exception as e:
+                print(f"⚠️ Failed to load scholar collection: {e}")
+                return None
+        return self._scholar_collection
     
     def create_expert_text(self, expert: Expert) -> str:
         """Create searchable text from expert data"""
@@ -30,17 +49,24 @@ class ExpertService:
         """Add an expert to the database"""
         collection = self.linkedin_collection if source == "linkedin" else self.scholar_collection
         
-        # Generate embedding
-        text = self.create_expert_text(expert)
-        embedding = embedding_generator.generate_embedding(text)
+        if collection is None:
+            print(f"⚠️ Collection not available for source: {source}")
+            return expert
         
-        # Add to collection
-        collection.add(
-            embeddings=[embedding],
-            documents=[text],
-            metadatas=[expert.dict()],
-            ids=[expert.id]
-        )
+        try:
+            # Generate embedding
+            text = self.create_expert_text(expert)
+            embedding = embedding_generator.generate_embedding(text)
+            
+            # Add to collection
+            collection.add(
+                embeddings=[embedding],
+                documents=[text],
+                metadatas=[expert.dict()],
+                ids=[expert.id]
+            )
+        except Exception as e:
+            print(f"⚠️ Failed to add expert to collection: {e}")
         
         return expert
     
@@ -52,7 +78,7 @@ class ExpertService:
         query_embedding = embedding_generator.generate_embedding(query)
         
         # Search in LinkedIn collection
-        if source in ["all", "linkedin"]:
+        if source in ["all", "linkedin"] and self.linkedin_collection is not None:
             try:
                 linkedin_results = self.linkedin_collection.query(
                     query_embeddings=[query_embedding],
@@ -64,10 +90,10 @@ class ExpertService:
                         expert.source = "linkedin"
                         results.append(expert)
             except Exception as e:
-                print(f"Error searching LinkedIn collection: {e}")
+                print(f"⚠️ Error searching LinkedIn collection: {e}")
         
         # Search in Scholar collection
-        if source in ["all", "scholar"]:
+        if source in ["all", "scholar"] and self.scholar_collection is not None:
             try:
                 scholar_results = self.scholar_collection.query(
                     query_embeddings=[query_embedding],
@@ -79,7 +105,7 @@ class ExpertService:
                         expert.source = "scholar"
                         results.append(expert)
             except Exception as e:
-                print(f"Error searching Scholar collection: {e}")
+                print(f"⚠️ Error searching Scholar collection: {e}")
         
         # Calculate credibility scores
         results = self.calculate_credibility_scores(results)
