@@ -109,10 +109,17 @@ if ENHANCED_OUTREACH_ENABLED:
 @app.on_event("startup")
 async def startup_event():
     """Initialize the database on startup"""
-    init_db()
-    print("Database initialized successfully")
-    print(f"Outreach module enabled: {OUTREACH_ENABLED}")
-    print(f"Enhanced outreach enabled: {ENHANCED_OUTREACH_ENABLED}")
+    try:
+        init_db()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Warning: Database initialization failed: {e}")
+        print("🔄 Continuing startup without database...")
+        # Don't fail startup in production if DB is not available
+        
+    print(f"📦 Outreach module enabled: {OUTREACH_ENABLED}")
+    print(f"🚀 Enhanced outreach enabled: {ENHANCED_OUTREACH_ENABLED}")
+    print("🌟 Expert Finder API is starting up...")
 
 @app.get("/")
 async def root():

@@ -51,22 +51,25 @@ def init_db():
         # Only create tables if we can connect
         if os.getenv("TESTING") != "true":
             Base.metadata.create_all(bind=engine)
-            print("Database tables created successfully")
+            print("✅ Database tables created successfully")
         
         # Initialize ChromaDB collections
         try:
             from app.services.vector_search import vector_search_service
             vector_search_service.init_collections()
+            print("✅ Vector search initialized successfully")
         except Exception as e:
             print(f"⚠️ Warning: Vector search initialization failed: {e}")
             # Continue without vector search in deployment environments
-            if not (os.getenv("TESTING") == "true" or os.getenv("RAILWAY_ENVIRONMENT_NAME")):
-                raise
         
         print("✅ Database initialized successfully")
     except Exception as e:
         print(f"❌ Warning: Database initialization failed: {e}")
-        if not (os.getenv("TESTING") == "true" or os.getenv("RAILWAY_ENVIRONMENT_NAME")):
+        # In production environments, don't fail if DB is not ready
+        is_production = (os.getenv("RAILWAY_ENVIRONMENT_NAME") or 
+                        os.getenv("RAILWAY_SERVICE_NAME") or
+                        os.getenv("PORT"))
+        if not (os.getenv("TESTING") == "true" or is_production):
             raise
 
 # ChromaDB collection getter (for backward compatibility)
